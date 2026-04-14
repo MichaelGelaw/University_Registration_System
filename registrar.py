@@ -2,8 +2,24 @@ import json
 import os
 from dsa_lib.structures import LinkedQueue, CourseBST
 from dsa_lib.sorting import linear_search
+import hashlib
 
-DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "university_data.json")
+def hash_password(password):
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+# ── Grade → quality-point mapping (single source of truth) ──────────
+# Imported by app.py as well — update here only.
+GPA_SCALE = {
+    "A+": 4.0, "A": 4.0, "A-": 3.7,
+    "B+": 3.3, "B": 3.0, "B-": 2.7,
+    "C+": 2.3, "C": 2.0, "C-": 1.7,
+    "D+": 1.3, "D": 1.0, "D-": 0.7,
+    "F":  0.0,
+}
+
+DATA_FILE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "university_data.json")
+SAMPLE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "university_data.sample.json")
+
 
 
 class Course:
@@ -75,10 +91,8 @@ class CourseOffering:
             if pre not in student.completed_courses:
                 return f"Missing prerequisite: {pre}"
 
-        # 2. Schedule Conflict Check
-        for offering_name in student.active_schedule:
-            # We need the Institution to resolve this, handled at the Institution level
-            pass
+        # 2. Schedule Conflict Check — handled at Institution.check_time_conflict(),
+        #    which is called by Institution.register_student() before this method.
 
         # 3. Capacity Check → Enroll or Queue
         if not self.is_full:
@@ -136,24 +150,20 @@ class CourseOffering:
 class Student:
     """A student enrolled at the university."""
 
-    def __init__(self, first, last, username, dob):
+    def __init__(self, first, last, username, dob, email="", password_hash="", avatar_path=""):
         self.first = first
         self.last = last
         self.username = username
         self.dob = dob
+        self.email = email
+        self.password_hash = password_hash
+        self.avatar_path = avatar_path
         self.active_schedule = []          # List of offering display names (strings)
         self.completed_courses = {}        # {course_name: grade}
 
     @property
     def gpa(self):
-        scale = {
-            "A+": 4.0, "A": 4.0, "A-": 3.7,
-            "B+": 3.3, "B": 3.0, "B-": 2.7,
-            "C+": 2.3, "C": 2.0, "C-": 1.7,
-            "D+": 1.3, "D": 1.0, "D-": 0.7,
-            "F": 0.0,
-        }
-        grades = [scale.get(g, 0.0) for g in self.completed_courses.values()]
+        grades = [GPA_SCALE.get(g, 0.0) for g in self.completed_courses.values()]
         return round(sum(grades) / len(grades), 2) if grades else 0.0
 
     @property
@@ -166,19 +176,57 @@ class Student:
             "last": self.last,
             "username": self.username,
             "dob": self.dob,
+            "email": self.email,
+            "password_hash": self.password_hash,
+            "avatar_path": self.avatar_path,
             "completed_courses": self.completed_courses,
             "active_schedule": self.active_schedule,
         }
 
     @classmethod
     def from_dict(cls, d):
-        s = cls(d["first"], d["last"], d["username"], d["dob"])
+        s = cls(d["first"], d["last"], d["username"], d["dob"], 
+                d.get("email", ""), d.get("password_hash", ""), d.get("avatar_path", ""))
         s.completed_courses = d.get("completed_courses", {})
         s.active_schedule = d.get("active_schedule", [])
         return s
 
     def __repr__(self):
         return f"{self.full_name} (@{self.username}) — GPA: {self.gpa}"
+
+
+class Admin:
+    """An administrator who manages the institution."""
+
+    def __init__(self, first, last, username, email="", password_hash="", avatar_path=""):
+        self.first = first
+        self.last = last
+        self.username = username
+        self.email = email
+        self.password_hash = password_hash
+        self.avatar_path = avatar_path
+        
+    @property
+    def full_name(self):
+        return f"{self.first} {self.last}"
+
+    def to_dict(self):
+        return {
+            "first": self.first,
+            "last": self.last,
+            "username": self.username,
+            "email": self.email,
+            "password_hash": self.password_hash,
+            "avatar_path": self.avatar_path,
+        }
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(d["first"], d["last"], d["username"], 
+                   d.get("email", ""), d.get("password_hash", ""), d.get("avatar_path", ""))
+        
+    def __repr__(self):
+        return f"Admin: {self.full_name} (@{self.username})"
 
 
 class Institution:
@@ -188,6 +236,7 @@ class Institution:
         self.name = name
         self.catalog = CourseBST()
         self.students = {}      # {username: Student}
+        self.admins = {}        # {username: Admin}
         self.offerings = []     # List[CourseOffering]
 
     # ─── Search ──────────────────────────────────────────────
@@ -287,6 +336,7 @@ class Institution:
             "institution_name": self.name,
             "courses": [c.to_dict() for c in self.catalog.inorder()],
             "students": {u: s.to_dict() for u, s in self.students.items()},
+            "admins": {u: a.to_dict() for u, a in self.admins.items()},
             "offerings": [o.to_dict() for o in self.offerings],
         }
 
@@ -296,12 +346,23 @@ class Institution:
 
     @classmethod
     def load(cls, filepath=None):
-        """Rehydrate Institution from JSON — rebuilds BST, students, and queues."""
+        """Rehydrate Institution from JSON — rebuilds BST, students, and queues.
+        
+        On first run (no university_data.json), automatically seeds from
+        university_data.sample.json so the app starts with showcase data.
+        """
         if filepath is None:
             filepath = DATA_FILE
 
         if not os.path.exists(filepath):
-            return cls("Tech University")
+            # Seed from sample if available
+            if os.path.exists(SAMPLE_FILE):
+                import shutil
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                shutil.copy2(SAMPLE_FILE, filepath)
+                print(f"[INFO] Seeded '{filepath}' from sample data.")
+            else:
+                return cls("Tech University")
 
         with open(filepath, "r") as f:
             data = json.load(f)
@@ -317,6 +378,17 @@ class Institution:
         students_data = data.get("students", {})
         for username, s_data in students_data.items():
             inst.students[username] = Student.from_dict(s_data)
+
+        # 2b. Rebuild admins
+        admins_data = data.get("admins", {})
+        
+        # Provision default admin if no admins exist
+        if not admins_data:
+            default_admin = Admin("System", "Admin", "admin", "admin@university.edu", hash_password("password123"), "")
+            admins_data["admin"] = default_admin.to_dict()
+            
+        for username, a_data in admins_data.items():
+            inst.admins[username] = Admin.from_dict(a_data)
 
         # 3. Rebuild offerings (re-link to BST courses, re-enqueue waitlists)
         for o_data in data.get("offerings", []):

@@ -4,8 +4,9 @@ Uses custom DSA structures: BST (catalog), LinkedQueue (waitlists), MergeSort, L
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox
-from registrar import Institution, Course, CourseOffering, Student
+from tkinter import ttk, messagebox, filedialog
+from registrar import Institution, Course, CourseOffering, Student, Admin, hash_password, GPA_SCALE
+from utils.image_processing import process_avatar, save_avatar_file
 
 # ─── Color Palette (Modern Light Theme) ─────────────────────
 BG_DARK       = "#f0f2f5"       # Main background — soft gray
@@ -157,9 +158,102 @@ class UniversityApp:
 
         # Load institution from JSON (rehydrates BST, Students, Queues)
         self.uni = Institution.load()
+        
+        self.current_user = None
+        self.current_role = None
+        
+        self.main_container = ttk.Frame(self.root, style="TFrame")
+        self.main_container.pack(fill="both", expand=True)
 
+        self.show_login()
+
+    def clear_container(self):
+        for widget in self.main_container.winfo_children():
+            widget.destroy()
+
+    def logout(self):
+        self.current_user = None
+        self.current_role = None
+        self.show_login()
+
+    def show_login(self):
+        self.clear_container()
+        from auth_views import LoginFrame
+        LoginFrame(self.main_container, self).pack(fill="both", expand=True)
+
+    def show_register(self):
+        self.clear_container()
+        from auth_views import RegisterFrame
+        RegisterFrame(self.main_container, self).pack(fill="both", expand=True)
+
+    def login_action(self, username, pwd, role):
+        if not username or not pwd:
+            messagebox.showwarning("Login Failed", "Username and password required.")
+            return
+
+        user_dict = self.uni.students if role == "Student" else self.uni.admins
+        user = user_dict.get(username)
+        
+        # Also check email
+        if not user:
+            for u in user_dict.values():
+                if u.email == username:
+                    user = u
+                    break
+
+        if not user:
+            messagebox.showerror("Login Failed", "User not found.")
+            return
+
+        if user.password_hash != hash_password(pwd):
+            messagebox.showerror("Login Failed", "Incorrect password.")
+            return
+
+        self.current_user = user
+        self.current_role = role
+        self.show_dashboard()
+
+    def register_action(self, first, last, username, dob, email, pwd, role, avatar_path):
+        from registrar import Student, Admin, hash_password
+        
+        user_dict = self.uni.students if role == "Student" else self.uni.admins
+        if username in user_dict:
+            return False, f"Username '{username}' already exists."
+            
+        for u in user_dict.values():
+            if u.email == email:
+                return False, f"Email '{email}' already exists."
+                
+        saved_avatar_path = ""
+        if avatar_path:
+            from utils.image_processing import save_avatar_file
+            saved_avatar_path = save_avatar_file(avatar_path, username)
+
+        if role == "Student":
+            new_user = Student(first, last, username, dob, email, hash_password(pwd), saved_avatar_path)
+            self.uni.students[username] = new_user
+        else:
+            new_user = Admin(first, last, username, email, hash_password(pwd), saved_avatar_path)
+            self.uni.admins[username] = new_user
+            
+        self.uni._save()
+        return True, "Registration successful. Please log in."
+
+    def show_dashboard(self):
+        self.clear_container()
         self._build_header()
-        self._build_notebook()
+
+        # Content area — no outer notebook wrapper, just straight into the role view
+        self.content_frame = ttk.Frame(self.main_container, style="TFrame")
+        self.content_frame.pack(expand=True, fill="both", padx=0, pady=0)
+
+        if self.current_role == "Admin":
+            self.tab_admin = self.content_frame
+            self._build_admin_tab()
+        else:
+            self.tab_student = self.content_frame
+            self._build_student_tab()
+
         self._build_status_bar()
 
     # ═══════════════════════════════════════════════════════════
@@ -167,54 +261,77 @@ class UniversityApp:
     # ═══════════════════════════════════════════════════════════
 
     def _build_header(self):
-        header = ttk.Frame(self.root, style="Surface.TFrame")
+        header = ttk.Frame(self.main_container, style="Surface.TFrame")
         header.pack(fill="x", padx=0, pady=0)
 
         inner = ttk.Frame(header, style="Surface.TFrame")
         inner.pack(fill="x", padx=30, pady=(16, 12))
 
-        ttk.Label(inner, text="🎓", font=(FONT_FAMILY, 28), style="Surface.TLabel").pack(side="left", padx=(0, 10))
+        avatar_path = getattr(self.current_user, 'avatar_path', "")
+        from utils.image_processing import process_avatar
+        self.header_avatar_img = process_avatar(avatar_path, size=(50, 50))
+        
+        if self.header_avatar_img:
+            ttk.Label(inner, image=self.header_avatar_img, style="Surface.TLabel").pack(side="left", padx=(0, 15))
+        else:
+            ttk.Label(inner, text="👤", font=(FONT_FAMILY, 28), style="Surface.TLabel").pack(side="left", padx=(0, 15))
 
         text_block = ttk.Frame(inner, style="Surface.TFrame")
         text_block.pack(side="left")
-        ttk.Label(text_block, text=self.uni.name, font=(FONT_FAMILY, 18, "bold"),
+        
+        welcome_text = f"Welcome, {self.current_user.full_name} ({self.current_role})"
+        ttk.Label(text_block, text=welcome_text, font=(FONT_FAMILY, 15, "bold"),
                   foreground=TEXT_PRIMARY, style="Surface.TLabel").pack(anchor="w")
-        ttk.Label(text_block, text="Academic Management System  ·  Powered by Custom DSA",
+        ttk.Label(text_block, text=f"{self.uni.name}  ·  Academic Management System",
                   font=FONT_SMALL, foreground=TEXT_DIM, style="Surface.TLabel").pack(anchor="w")
 
         # Stats on the right
         stats = ttk.Frame(inner, style="Surface.TFrame")
         stats.pack(side="right")
-        n_courses = len(self.uni.catalog)
-        n_students = len(self.uni.students)
-        n_offerings = len(self.uni.offerings)
-        for label, val, color in [("Courses", n_courses, ACCENT), ("Students", n_students, SUCCESS),
-                                   ("Offerings", n_offerings, WARNING)]:
-            chip = ttk.Frame(stats, style="Surface.TFrame")
-            chip.pack(side="left", padx=12)
-            ttk.Label(chip, text=str(val), font=(FONT_FAMILY, 16, "bold"),
-                      foreground=color, style="Surface.TLabel").pack()
-            ttk.Label(chip, text=label, font=FONT_SMALL,
-                      foreground=TEXT_DIM, style="Surface.TLabel").pack()
+        
+        if self.current_role == "Admin":
+            self._header_stat_labels = {}
+            n_courses  = len(self.uni.catalog)
+            n_students  = len(self.uni.students)
+            n_offerings = len(self.uni.offerings)
+            for key, label, val, color in [
+                ("courses",  "Courses",  n_courses,  ACCENT),
+                ("students", "Students", n_students, SUCCESS),
+                ("offerings","Offerings",n_offerings, WARNING)
+            ]:
+                chip = ttk.Frame(stats, style="Surface.TFrame")
+                chip.pack(side="left", padx=12)
+                lbl_val = ttk.Label(chip, text=str(val), font=(FONT_FAMILY, 16, "bold"),
+                          foreground=color, style="Surface.TLabel")
+                lbl_val.pack()
+                self._header_stat_labels[key] = lbl_val
+                ttk.Label(chip, text=label, font=FONT_SMALL,
+                          foreground=TEXT_DIM, style="Surface.TLabel").pack()
+                      
+        # Add Logout Button inside header stats
+        logout_chip = ttk.Frame(stats, style="Surface.TFrame")
+        logout_chip.pack(side="left", padx=(30, 0))
+        ttk.Button(logout_chip, text="🚪 Sign Out", style="Danger.TButton",
+                   command=self.logout).pack(pady=4)
+
+    def _refresh_header_stats(self):
+        """Update the live stat counters in the admin header."""
+        if not hasattr(self, '_header_stat_labels'):
+            return
+        labels = self._header_stat_labels
+        if "courses" in labels:
+            labels["courses"].config(text=str(len(self.uni.catalog)))
+        if "students" in labels:
+            labels["students"].config(text=str(len(self.uni.students)))
+        if "offerings" in labels:
+            labels["offerings"].config(text=str(len(self.uni.offerings)))
 
     # ═══════════════════════════════════════════════════════════
     #  MAIN NOTEBOOK
     # ═══════════════════════════════════════════════════════════
 
-    def _build_notebook(self):
-        self.notebook = ttk.Notebook(self.root)
-        self.tab_admin = ttk.Frame(self.notebook, style="TFrame")
-        self.tab_student = ttk.Frame(self.notebook, style="TFrame")
-
-        self.notebook.add(self.tab_admin, text="  ⚙  Admin Portal  ")
-        self.notebook.add(self.tab_student, text="  🎒  Student Portal  ")
-        self.notebook.pack(expand=True, fill="both", padx=15, pady=(5, 10))
-
-        self._build_admin_tab()
-        self._build_student_tab()
-
     def _build_status_bar(self):
-        bar = ttk.Frame(self.root, style="Surface.TFrame")
+        bar = ttk.Frame(self.main_container, style="Surface.TFrame")
         bar.pack(fill="x", side="bottom")
         self.status_label = ttk.Label(bar, text="  System ready  ·  All data structures loaded from JSON",
                                       font=FONT_SMALL, foreground=TEXT_DIM, style="Surface.TLabel")
@@ -230,75 +347,130 @@ class UniversityApp:
     # ═══════════════════════════════════════════════════════════
 
     def _build_admin_tab(self):
-        admin_nb = ttk.Notebook(self.tab_admin, style="Inner.TNotebook")
-        admin_nb.pack(fill="both", expand=True, padx=10, pady=10)
+        parent = self.tab_admin
 
-        # Sub-tabs
-        self.admin_catalog_tab = ttk.Frame(admin_nb, style="TFrame")
-        self.admin_offerings_tab = ttk.Frame(admin_nb, style="TFrame")
-        self.admin_students_tab = ttk.Frame(admin_nb, style="TFrame")
-        self.admin_grades_tab = ttk.Frame(admin_nb, style="TFrame")
+        # ── Two-pane layout: left sidebar nav + right content ──
+        sidebar = tk.Frame(parent, bg=ACCENT, width=180)
+        sidebar.pack(side="left", fill="y")
+        sidebar.pack_propagate(False)
 
-        admin_nb.add(self.admin_catalog_tab, text=" 📚 Course Catalog ")
-        admin_nb.add(self.admin_offerings_tab, text=" 📅 Offerings ")
-        admin_nb.add(self.admin_students_tab, text=" 👥 Students ")
-        admin_nb.add(self.admin_grades_tab, text=" 📝 Grades & Drop ")
+        self.admin_content = ttk.Frame(parent, style="TFrame")
+        self.admin_content.pack(side="left", fill="both", expand=True)
+
+        # Sidebar nav items
+        tk.Label(sidebar, text="⚙  Admin", bg=ACCENT, fg="#ffffff",
+                 font=(FONT_FAMILY, 13, "bold"), pady=20).pack(fill="x")
+        tk.Frame(sidebar, bg="#6366f1", height=1).pack(fill="x", padx=16)
+
+        self._admin_nav_btns = {}
+        nav_items = [
+            ("catalog",   "📚  Course Catalog"),
+            ("offerings", "📅  Offerings"),
+            ("students",  "👥  Students"),
+            ("grades",    "📝  Grades & Drop"),
+        ]
+        for key, label in nav_items:
+            btn = tk.Label(sidebar, text=label, bg=ACCENT, fg="#c7d2fe",
+                           font=(FONT_FAMILY, 10), anchor="w", padx=22, pady=13,
+                           cursor="hand2")
+            btn.pack(fill="x")
+            btn.bind("<Button-1>", lambda e, k=key: self._show_admin_section(k))
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg=ACCENT_HOVER, fg="#ffffff"))
+            btn.bind("<Leave>", lambda e, b=btn, k2=key: b.config(
+                bg="#3730a3" if self._admin_active == k2 else ACCENT,
+                fg="#ffffff" if self._admin_active == k2 else "#c7d2fe"))
+            self._admin_nav_btns[key] = btn
+
+        # Pre-build all section frames (hidden)
+        self.admin_catalog_tab    = ttk.Frame(self.admin_content, style="TFrame")
+        self.admin_offerings_tab  = ttk.Frame(self.admin_content, style="TFrame")
+        self.admin_students_tab   = ttk.Frame(self.admin_content, style="TFrame")
+        self.admin_grades_tab     = ttk.Frame(self.admin_content, style="TFrame")
 
         self._build_admin_catalog()
         self._build_admin_offerings()
         self._build_admin_students()
         self._build_admin_grades()
 
+        self._admin_active = "catalog"
+        self._show_admin_section("catalog")
+
+    def _show_admin_section(self, key):
+        self._admin_active = key
+        section_map = {
+            "catalog":   self.admin_catalog_tab,
+            "offerings": self.admin_offerings_tab,
+            "students":  self.admin_students_tab,
+            "grades":    self.admin_grades_tab,
+        }
+        for k, frame in section_map.items():
+            frame.pack_forget()
+        section_map[key].pack(fill="both", expand=True)
+
+        # Update highlight
+        for k, btn in self._admin_nav_btns.items():
+            if k == key:
+                btn.config(bg="#3730a3", fg="#ffffff")
+            else:
+                btn.config(bg=ACCENT, fg="#c7d2fe")
+
     # ─── Catalog ─────────────────────────────────────────────
 
     def _build_admin_catalog(self):
         parent = self.admin_catalog_tab
 
-        # Form
-        form = ttk.LabelFrame(parent, text="  Add Course to BST Catalog  ")
-        form.pack(fill="x", padx=15, pady=(15, 5))
+        # ── Section header ──
+        hdr = ttk.Frame(parent, style="Surface.TFrame")
+        hdr.pack(fill="x", padx=0, pady=0)
+        hdr_inner = ttk.Frame(hdr, style="Surface.TFrame")
+        hdr_inner.pack(fill="x", padx=24, pady=16)
+        ttk.Label(hdr_inner, text="Course Catalog", font=(FONT_FAMILY, 16, "bold"),
+                  foreground=TEXT_PRIMARY, style="Surface.TLabel").pack(side="left")
+        ttk.Label(hdr_inner, text="BST — sorted in-order", font=FONT_SMALL,
+                  foreground=TEXT_DIM, style="Surface.TLabel").pack(side="left", padx=12)
+        ttk.Button(hdr_inner, text="🗑  Delete Selected", style="Danger.TButton",
+                   command=self._delete_course).pack(side="right")
+        ttk.Separator(parent, orient="horizontal").pack(fill="x")
 
-        fields = ttk.Frame(form, style="TFrame")
-        fields.pack(fill="x", padx=15, pady=12)
+        # ── Add form card ──
+        card = ttk.Frame(parent, style="Surface.TFrame")
+        card.pack(fill="x", padx=20, pady=16)
+        ttk.Label(card, text="Add Course", font=(FONT_FAMILY, 10, "bold"),
+                  foreground=ACCENT, style="Surface.TLabel").pack(anchor="w", pady=(0, 8))
 
-        for i, (lbl, w) in enumerate([("Department", 8), ("Number", 6), ("Course Name", 20),
-                                       ("Credits", 5), ("Prerequisites (comma-sep)", 25)]):
-            ttk.Label(fields, text=lbl, font=FONT_SMALL, foreground=TEXT_SECONDARY).grid(row=0, column=i, padx=6, sticky="w")
-
-        self.cat_dept = ttk.Entry(fields, width=8)
-        self.cat_num = ttk.Entry(fields, width=6)
-        self.cat_name = ttk.Entry(fields, width=20)
-        self.cat_cred = ttk.Entry(fields, width=5)
-        self.cat_prereqs = ttk.Entry(fields, width=25)
-
+        fields = ttk.Frame(card, style="Surface.TFrame")
+        fields.pack(fill="x")
+        field_defs = [("Dept", 6), ("#", 5), ("Course Name", 22), ("Credits", 5), ("Prerequisites (comma-sep)", 26)]
+        for i, (lbl, _) in enumerate(field_defs):
+            ttk.Label(fields, text=lbl, font=(FONT_FAMILY, 8, "bold"),
+                      foreground=TEXT_SECONDARY, style="Surface.TLabel").grid(row=0, column=i, padx=5, sticky="w")
+        self.cat_dept = ttk.Entry(fields, width=field_defs[0][1])
+        self.cat_num = ttk.Entry(fields, width=field_defs[1][1])
+        self.cat_name = ttk.Entry(fields, width=field_defs[2][1])
+        self.cat_cred = ttk.Entry(fields, width=field_defs[3][1])
+        self.cat_prereqs = ttk.Entry(fields, width=field_defs[4][1])
         for i, e in enumerate([self.cat_dept, self.cat_num, self.cat_name, self.cat_cred, self.cat_prereqs]):
-            e.grid(row=1, column=i, padx=6, pady=(2, 0), sticky="ew")
-
-        ttk.Button(fields, text="➕ Insert into BST", style="Accent.TButton",
+            e.grid(row=1, column=i, padx=5, pady=(4, 0), sticky="ew")
+        ttk.Button(fields, text="➕ Add Course", style="Accent.TButton",
                    command=self._add_course).grid(row=1, column=5, padx=(12, 0))
 
-        # Treeview
-        tree_frame = ttk.Frame(parent)
-        tree_frame.pack(fill="both", expand=True, padx=15, pady=10)
+        ttk.Separator(parent, orient="horizontal").pack(fill="x", padx=20)
 
+        # ── Table ──
+        tree_wrap = ttk.Frame(parent, style="TFrame")
+        tree_wrap.pack(fill="both", expand=True, padx=20, pady=16)
         cols = ("dept", "number", "name", "credits", "prereqs")
-        self.catalog_tree = ttk.Treeview(tree_frame, columns=cols, show="headings", selectmode="browse")
-        for col, heading, w in [("dept", "Dept", 70), ("number", "#", 60), ("name", "Course Name", 220),
-                                 ("credits", "Cr", 50), ("prereqs", "Prerequisites", 250)]:
+        self.catalog_tree = ttk.Treeview(tree_wrap, columns=cols, show="headings", selectmode="browse")
+        for col, heading, w, anchor in [
+            ("dept", "Dept", 70, "center"), ("number", "#", 60, "center"),
+            ("name", "Course Name", 230, "w"), ("credits", "Cr", 50, "center"),
+            ("prereqs", "Prerequisites", 0, "w")]:
             self.catalog_tree.heading(col, text=heading)
-            self.catalog_tree.column(col, width=w, anchor="center" if w < 100 else "w")
-
-        vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.catalog_tree.yview)
+            self.catalog_tree.column(col, width=w, anchor=anchor, stretch=(col=="prereqs"))
+        vsb = ttk.Scrollbar(tree_wrap, orient="vertical", command=self.catalog_tree.yview)
         self.catalog_tree.configure(yscrollcommand=vsb.set)
         self.catalog_tree.pack(side="left", fill="both", expand=True)
         vsb.pack(side="right", fill="y")
-
-        # Bottom bar
-        bot = ttk.Frame(parent)
-        bot.pack(fill="x", padx=15, pady=(0, 10))
-        ttk.Button(bot, text="🗑  Delete Selected", style="Danger.TButton",
-                   command=self._delete_course).pack(side="right")
-
         self._refresh_catalog_tree()
 
     def _add_course(self):
@@ -323,6 +495,7 @@ class UniversityApp:
         self.uni.catalog.insert(course)
         self.uni._save()
         self._refresh_catalog_tree()
+        self._refresh_header_stats()
         self._set_status(f"Course '{name}' inserted into BST (O(log n)).")
 
         # Clear fields
@@ -338,6 +511,7 @@ class UniversityApp:
             self.uni.catalog.delete(name)
             self.uni._save()
             self._refresh_catalog_tree()
+            self._refresh_header_stats()
             self._set_status(f"Course '{name}' removed from BST.")
 
     def _refresh_catalog_tree(self):
@@ -355,54 +529,63 @@ class UniversityApp:
     def _build_admin_offerings(self):
         parent = self.admin_offerings_tab
 
-        form = ttk.LabelFrame(parent, text="  Schedule a Course Offering  ")
-        form.pack(fill="x", padx=15, pady=(15, 5))
+        # ── Section header ──
+        hdr = ttk.Frame(parent, style="Surface.TFrame")
+        hdr.pack(fill="x")
+        hdr_inner = ttk.Frame(hdr, style="Surface.TFrame")
+        hdr_inner.pack(fill="x", padx=24, pady=16)
+        ttk.Label(hdr_inner, text="Course Offerings", font=(FONT_FAMILY, 16, "bold"),
+                  foreground=TEXT_PRIMARY, style="Surface.TLabel").pack(side="left")
+        ttk.Label(hdr_inner, text="Scheduled sections & enrollment", font=FONT_SMALL,
+                  foreground=TEXT_DIM, style="Surface.TLabel").pack(side="left", padx=12)
+        ttk.Separator(parent, orient="horizontal").pack(fill="x")
 
-        fields = ttk.Frame(form, style="TFrame")
-        fields.pack(fill="x", padx=15, pady=12)
+        # ── Create offering card ──
+        card = ttk.Frame(parent, style="Surface.TFrame")
+        card.pack(fill="x", padx=20, pady=16)
+        ttk.Label(card, text="Schedule New Offering", font=(FONT_FAMILY, 10, "bold"),
+                  foreground=ACCENT, style="Surface.TLabel").pack(anchor="w", pady=(0, 8))
 
-        # Row 0 labels
-        labels = ["Course (from BST)", "Section", "Year", "Quarter", "Capacity", "Time Slot"]
+        fields = ttk.Frame(card, style="Surface.TFrame")
+        fields.pack(fill="x")
+        labels = ["Course (BST)", "Section", "Year", "Quarter", "Capacity", "Time Slot"]
         for i, lbl in enumerate(labels):
-            ttk.Label(fields, text=lbl, font=FONT_SMALL, foreground=TEXT_SECONDARY).grid(row=0, column=i, padx=6, sticky="w")
-
+            ttk.Label(fields, text=lbl, font=(FONT_FAMILY, 8, "bold"),
+                      foreground=TEXT_SECONDARY, style="Surface.TLabel").grid(row=0, column=i, padx=5, sticky="w")
         catalog_names = [c.name for c in self.uni.catalog.inorder()]
-        self.off_course = ttk.Combobox(fields, values=catalog_names, width=18, state="readonly")
-        self.off_section = ttk.Entry(fields, width=5)
-        self.off_section.insert(0, "1")
-        self.off_year = ttk.Entry(fields, width=6)
-        self.off_year.insert(0, "2026")
-        self.off_quarter = ttk.Combobox(fields, values=["Fall", "Winter", "Spring", "Summer"], width=8, state="readonly")
+        self.off_course = ttk.Combobox(fields, values=catalog_names, width=20, state="readonly")
+        self.off_section = ttk.Entry(fields, width=5); self.off_section.insert(0, "1")
+        self.off_year = ttk.Entry(fields, width=6); self.off_year.insert(0, "2026")
+        self.off_quarter = ttk.Combobox(fields, values=["Fall","Winter","Spring","Summer"], width=8, state="readonly")
         self.off_quarter.set("Spring")
-        self.off_capacity = ttk.Entry(fields, width=5)
-        self.off_capacity.insert(0, "30")
+        self.off_capacity = ttk.Entry(fields, width=5); self.off_capacity.insert(0, "30")
         self.off_time = ttk.Combobox(fields, values=[
-            "MW 08:00-09:30", "MW 10:00-11:30", "MW 12:00-13:30", "MW 14:00-15:30",
-            "TR 08:00-09:30", "TR 09:00-10:30", "TR 10:00-11:30", "TR 14:00-15:30",
+            "MW 08:00-09:30","MW 10:00-11:30","MW 12:00-13:30","MW 14:00-15:30",
+            "TR 08:00-09:30","TR 09:00-10:30","TR 10:00-11:30","TR 14:00-15:30",
         ], width=16)
         self.off_time.set("MW 10:00-11:30")
-
-        widgets = [self.off_course, self.off_section, self.off_year, self.off_quarter, self.off_capacity, self.off_time]
-        for i, w in enumerate(widgets):
-            w.grid(row=1, column=i, padx=6, pady=(2, 0), sticky="ew")
-
-        ttk.Button(fields, text="📅 Create Offering", style="Accent.TButton",
+        for i, w in enumerate([self.off_course, self.off_section, self.off_year,
+                                self.off_quarter, self.off_capacity, self.off_time]):
+            w.grid(row=1, column=i, padx=5, pady=(4, 0), sticky="ew")
+        ttk.Button(fields, text="📅 Create", style="Accent.TButton",
                    command=self._create_offering).grid(row=1, column=6, padx=(12, 0))
 
-        # Offerings table
-        tree_frame = ttk.Frame(parent)
-        tree_frame.pack(fill="both", expand=True, padx=15, pady=10)
+        ttk.Separator(parent, orient="horizontal").pack(fill="x", padx=20)
 
+        # ── Offerings table ──
+        tree_wrap = ttk.Frame(parent, style="TFrame")
+        tree_wrap.pack(fill="both", expand=True, padx=20, pady=16)
         cols = ("id", "course", "section", "quarter", "time", "enrolled", "capacity", "waitlist")
-        self.offer_tree = ttk.Treeview(tree_frame, columns=cols, show="headings", selectmode="browse")
-        headings = [("id", "ID", 50), ("course", "Course", 180), ("section", "Sec", 50),
-                    ("quarter", "Quarter", 90), ("time", "Time Slot", 140),
-                    ("enrolled", "Enrolled", 80), ("capacity", "Cap", 50), ("waitlist", "Waitlist", 70)]
-        for col, heading, w in headings:
+        self.offer_tree = ttk.Treeview(tree_wrap, columns=cols, show="headings", selectmode="browse")
+        for col, heading, w in [("id","#",40),("course","Course",190),("section","Sec",50),
+                                 ("quarter","Quarter",95),("time","Time Slot",140),
+                                 ("enrolled","Enrolled",75),("capacity","Cap",55),("waitlist","Waitlist",65)]:
             self.offer_tree.heading(col, text=heading)
             self.offer_tree.column(col, width=w, anchor="center")
-
-        self.offer_tree.pack(fill="both", expand=True)
+        vsb = ttk.Scrollbar(tree_wrap, orient="vertical", command=self.offer_tree.yview)
+        self.offer_tree.configure(yscrollcommand=vsb.set)
+        self.offer_tree.pack(side="left", fill="both", expand=True)
+        vsb.pack(side="right", fill="y")
         self._refresh_offer_tree()
 
     def _create_offering(self):
@@ -426,6 +609,7 @@ class UniversityApp:
         self.uni.offerings.append(offering)
         self.uni._save()
         self._refresh_offer_tree()
+        self._refresh_header_stats()
         self._set_status(f"Offering created: {offering.display_name} ({self.off_quarter.get()} {year})")
 
     def _refresh_offer_tree(self):
@@ -445,51 +629,66 @@ class UniversityApp:
     def _build_admin_students(self):
         parent = self.admin_students_tab
 
-        # Toolbar
-        toolbar = ttk.Frame(parent)
-        toolbar.pack(fill="x", padx=15, pady=(15, 5))
+        # ── Section header ──
+        hdr = ttk.Frame(parent, style="Surface.TFrame")
+        hdr.pack(fill="x")
+        hdr_inner = ttk.Frame(hdr, style="Surface.TFrame")
+        hdr_inner.pack(fill="x", padx=24, pady=16)
+        ttk.Label(hdr_inner, text="Students", font=(FONT_FAMILY, 16, "bold"),
+                  foreground=TEXT_PRIMARY, style="Surface.TLabel").pack(side="left")
 
-        ttk.Label(toolbar, text="🔍  Search:", font=FONT_BODY).pack(side="left")
-        self.stu_search = ttk.Entry(toolbar, width=25)
-        self.stu_search.pack(side="left", padx=8)
+        sort_frame = ttk.Frame(hdr_inner, style="Surface.TFrame")
+        sort_frame.pack(side="right")
+        ttk.Button(sort_frame, text="Sort by GPA ↓", style="Accent.TButton",
+                   command=lambda: self._sort_students("gpa")).pack(side="left", padx=4)
+        ttk.Button(sort_frame, text="Sort by Name ↑", style="TButton",
+                   command=lambda: self._sort_students("name")).pack(side="left", padx=4)
+        ttk.Separator(parent, orient="horizontal").pack(fill="x")
+
+        # ── Search bar ──
+        search_bar = ttk.Frame(parent, style="Surface.TFrame")
+        search_bar.pack(fill="x", padx=20, pady=12)
+        ttk.Label(search_bar, text="🔍", font=(FONT_FAMILY, 11),
+                  style="Surface.TLabel").pack(side="left", padx=(0, 6))
+        self.stu_search = ttk.Entry(search_bar, width=30, font=(FONT_FAMILY, 10))
+        self.stu_search.pack(side="left")
         self.stu_search.bind("<KeyRelease>", lambda e: self._refresh_student_tree())
 
-        ttk.Button(toolbar, text="Sort by GPA ↓  (MergeSort)", style="Accent.TButton",
-                   command=lambda: self._sort_students("gpa")).pack(side="right", padx=4)
-        ttk.Button(toolbar, text="Sort by Last Name ↑", style="TButton",
-                   command=lambda: self._sort_students("name")).pack(side="right", padx=4)
-
-        # Add student form
-        add_frame = ttk.LabelFrame(parent, text="  Add New Student  ")
-        add_frame.pack(fill="x", padx=15, pady=5)
-        add_inner = ttk.Frame(add_frame, style="TFrame")
-        add_inner.pack(fill="x", padx=15, pady=10)
-
+        # ── Add student card ──
+        card = ttk.Frame(parent, style="Surface.TFrame")
+        card.pack(fill="x", padx=20, pady=(0, 12))
+        ttk.Label(card, text="Add Student", font=(FONT_FAMILY, 10, "bold"),
+                  foreground=ACCENT, style="Surface.TLabel").pack(anchor="w", pady=(0, 6))
+        fields = ttk.Frame(card, style="Surface.TFrame")
+        fields.pack(fill="x")
         for i, lbl in enumerate(["First Name", "Last Name", "Username", "DOB (YYYY-MM-DD)"]):
-            ttk.Label(add_inner, text=lbl, font=FONT_SMALL, foreground=TEXT_SECONDARY).grid(row=0, column=i, padx=6, sticky="w")
-
-        self.stu_first = ttk.Entry(add_inner, width=14)
-        self.stu_last = ttk.Entry(add_inner, width=14)
-        self.stu_user = ttk.Entry(add_inner, width=12)
-        self.stu_dob = ttk.Entry(add_inner, width=14)
+            ttk.Label(fields, text=lbl, font=(FONT_FAMILY, 8, "bold"),
+                      foreground=TEXT_SECONDARY, style="Surface.TLabel").grid(row=0, column=i, padx=5, sticky="w")
+        self.stu_first = ttk.Entry(fields, width=13)
+        self.stu_last  = ttk.Entry(fields, width=13)
+        self.stu_user  = ttk.Entry(fields, width=12)
+        self.stu_dob   = ttk.Entry(fields, width=13)
         for i, e in enumerate([self.stu_first, self.stu_last, self.stu_user, self.stu_dob]):
-            e.grid(row=1, column=i, padx=6, pady=(2, 0), sticky="ew")
-
-        ttk.Button(add_inner, text="➕ Add Student", style="Success.TButton",
+            e.grid(row=1, column=i, padx=5, pady=(4, 0), sticky="ew")
+        ttk.Button(fields, text="➕ Add", style="Success.TButton",
                    command=self._add_student).grid(row=1, column=4, padx=(12, 0))
 
-        # Table
-        tree_frame = ttk.Frame(parent)
-        tree_frame.pack(fill="both", expand=True, padx=15, pady=10)
+        ttk.Separator(parent, orient="horizontal").pack(fill="x", padx=20)
 
+        # ── Table ──
+        tree_wrap = ttk.Frame(parent, style="TFrame")
+        tree_wrap.pack(fill="both", expand=True, padx=20, pady=16)
         cols = ("username", "name", "gpa", "completed", "active")
-        self.student_tree = ttk.Treeview(tree_frame, columns=cols, show="headings", selectmode="browse")
-        for col, heading, w in [("username", "Username", 100), ("name", "Full Name", 180),
-                                 ("gpa", "GPA", 70), ("completed", "Completed", 80), ("active", "Active Courses", 200)]:
+        self.student_tree = ttk.Treeview(tree_wrap, columns=cols, show="headings", selectmode="browse")
+        for col, heading, w, anchor in [
+            ("username","Username",100,"center"),("name","Full Name",190,"w"),
+            ("gpa","GPA",65,"center"),("completed","Completed",85,"center"),("active","Active Courses",0,"w")]:
             self.student_tree.heading(col, text=heading)
-            self.student_tree.column(col, width=w, anchor="center" if w < 120 else "w")
-        self.student_tree.pack(fill="both", expand=True)
-
+            self.student_tree.column(col, width=w, anchor=anchor, stretch=(col=="active"))
+        vsb = ttk.Scrollbar(tree_wrap, orient="vertical", command=self.student_tree.yview)
+        self.student_tree.configure(yscrollcommand=vsb.set)
+        self.student_tree.pack(side="left", fill="both", expand=True)
+        vsb.pack(side="right", fill="y")
         self._refresh_student_tree()
 
     def _add_student(self):
@@ -507,6 +706,7 @@ class UniversityApp:
         self.uni.students[user] = student
         self.uni._save()
         self._refresh_student_tree()
+        self._refresh_header_stats()
         self._set_status(f"Student '{first} {last}' added.")
         for e in [self.stu_first, self.stu_last, self.stu_user, self.stu_dob]:
             e.delete(0, "end")
@@ -548,63 +748,76 @@ class UniversityApp:
 
     def _build_admin_grades(self):
         parent = self.admin_grades_tab
-
-        # ── Grade Entry Section ──
-        grade_frame = ttk.LabelFrame(parent, text="  📝 Assign Grade  ")
-        grade_frame.pack(fill="x", padx=15, pady=(15, 5))
-
-        g_inner = ttk.Frame(grade_frame, style="TFrame")
-        g_inner.pack(fill="x", padx=15, pady=12)
-
-        ttk.Label(g_inner, text="Offering", font=FONT_SMALL, foreground=TEXT_SECONDARY).grid(row=0, column=0, padx=6, sticky="w")
-        ttk.Label(g_inner, text="Student", font=FONT_SMALL, foreground=TEXT_SECONDARY).grid(row=0, column=1, padx=6, sticky="w")
-        ttk.Label(g_inner, text="Grade", font=FONT_SMALL, foreground=TEXT_SECONDARY).grid(row=0, column=2, padx=6, sticky="w")
-
         offering_names = [f"{o.display_name} ({o.quarter} {o.year})" for o in self.uni.offerings]
-        self.grade_offering = ttk.Combobox(g_inner, values=offering_names, width=25, state="readonly")
-        self.grade_offering.grid(row=1, column=0, padx=6)
+
+        # ── Section header ──
+        hdr = ttk.Frame(parent, style="Surface.TFrame")
+        hdr.pack(fill="x")
+        hdr_inner = ttk.Frame(hdr, style="Surface.TFrame")
+        hdr_inner.pack(fill="x", padx=24, pady=16)
+        ttk.Label(hdr_inner, text="Grades & Enrollment", font=(FONT_FAMILY, 16, "bold"),
+                  foreground=TEXT_PRIMARY, style="Surface.TLabel").pack(side="left")
+        ttk.Separator(parent, orient="horizontal").pack(fill="x")
+
+        # ── Two-column control area ──
+        controls = ttk.Frame(parent, style="Surface.TFrame")
+        controls.pack(fill="x", padx=20, pady=16)
+        controls.columnconfigure(0, weight=1)
+        controls.columnconfigure(1, weight=1)
+
+        # Assign grade card (left)
+        gc = ttk.Frame(controls, style="Surface.TFrame")
+        gc.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        ttk.Label(gc, text="Assign Grade", font=(FONT_FAMILY, 10, "bold"),
+                  foreground=ACCENT, style="Surface.TLabel").grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 6))
+        for i, lbl in enumerate(["Offering", "Student", "Grade"]):
+            ttk.Label(gc, text=lbl, font=(FONT_FAMILY, 8, "bold"),
+                      foreground=TEXT_SECONDARY, style="Surface.TLabel").grid(row=1, column=i, padx=5, sticky="w")
+        self.grade_offering = ttk.Combobox(gc, values=offering_names, width=22, state="readonly")
+        self.grade_offering.grid(row=2, column=0, padx=5, pady=(4, 0), sticky="ew")
         self.grade_offering.bind("<<ComboboxSelected>>", self._on_grade_offering_change)
-
-        self.grade_student = ttk.Combobox(g_inner, width=15, state="readonly")
-        self.grade_student.grid(row=1, column=1, padx=6)
-
-        self.grade_value = ttk.Combobox(g_inner, values=["A+","A","A-","B+","B","B-","C+","C","C-","D+","D","D-","F"],
+        self.grade_student = ttk.Combobox(gc, width=14, state="readonly")
+        self.grade_student.grid(row=2, column=1, padx=5, pady=(4, 0))
+        self.grade_value = ttk.Combobox(gc, values=["A+","A","A-","B+","B","B-","C+","C","C-","D+","D","D-","F"],
                                          width=5, state="readonly")
-        self.grade_value.grid(row=1, column=2, padx=6)
+        self.grade_value.grid(row=2, column=2, padx=5, pady=(4, 0))
+        ttk.Button(gc, text="✅ Assign", style="Success.TButton",
+                   command=self._assign_grade).grid(row=2, column=3, padx=(10, 0), pady=(4, 0))
 
-        ttk.Button(g_inner, text="✅ Assign Grade", style="Success.TButton",
-                   command=self._assign_grade).grid(row=1, column=3, padx=(12, 0))
-
-        # ── Drop Student Section ──
-        drop_frame = ttk.LabelFrame(parent, text="  🚫 Drop Student from Offering  ")
-        drop_frame.pack(fill="x", padx=15, pady=10)
-
-        d_inner = ttk.Frame(drop_frame, style="TFrame")
-        d_inner.pack(fill="x", padx=15, pady=12)
-
-        ttk.Label(d_inner, text="Offering", font=FONT_SMALL, foreground=TEXT_SECONDARY).grid(row=0, column=0, padx=6, sticky="w")
-        ttk.Label(d_inner, text="Enrolled Student", font=FONT_SMALL, foreground=TEXT_SECONDARY).grid(row=0, column=1, padx=6, sticky="w")
-
-        self.drop_offering = ttk.Combobox(d_inner, values=offering_names, width=25, state="readonly")
-        self.drop_offering.grid(row=1, column=0, padx=6)
+        # Drop student card (right)
+        dc = ttk.Frame(controls, style="Surface.TFrame")
+        dc.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
+        ttk.Label(dc, text="Drop Student", font=(FONT_FAMILY, 10, "bold"),
+                  foreground=DANGER, style="Surface.TLabel").grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 6))
+        for i, lbl in enumerate(["Offering", "Student"]):
+            ttk.Label(dc, text=lbl, font=(FONT_FAMILY, 8, "bold"),
+                      foreground=TEXT_SECONDARY, style="Surface.TLabel").grid(row=1, column=i, padx=5, sticky="w")
+        self.drop_offering = ttk.Combobox(dc, values=offering_names, width=22, state="readonly")
+        self.drop_offering.grid(row=2, column=0, padx=5, pady=(4, 0), sticky="ew")
         self.drop_offering.bind("<<ComboboxSelected>>", self._on_drop_offering_change)
+        self.drop_student = ttk.Combobox(dc, width=14, state="readonly")
+        self.drop_student.grid(row=2, column=1, padx=5, pady=(4, 0))
+        ttk.Button(dc, text="🚫 Drop", style="Danger.TButton",
+                   command=self._drop_student).grid(row=2, column=2, padx=(10, 0), pady=(4, 0))
 
-        self.drop_student = ttk.Combobox(d_inner, width=15, state="readonly")
-        self.drop_student.grid(row=1, column=1, padx=6)
+        ttk.Separator(parent, orient="horizontal").pack(fill="x", padx=20, pady=(4, 0))
 
-        ttk.Button(d_inner, text="🚫 Drop & Auto-Dequeue", style="Danger.TButton",
-                   command=self._drop_student).grid(row=1, column=2, padx=(12, 0))
-
-        # ── Enrollment Info ──
-        info_frame = ttk.LabelFrame(parent, text="  📋 Offering Enrollment Details  ")
-        info_frame.pack(fill="both", expand=True, padx=15, pady=10)
-
+        # ── Enrollment detail tree ──
+        lbl_row = ttk.Frame(parent, style="TFrame")
+        lbl_row.pack(fill="x", padx=24, pady=(12, 4))
+        ttk.Label(lbl_row, text="Enrollment Details", font=(FONT_FAMILY, 10, "bold"),
+                  foreground=TEXT_PRIMARY).pack(side="left")
+        tree_wrap = ttk.Frame(parent, style="TFrame")
+        tree_wrap.pack(fill="both", expand=True, padx=20, pady=(0, 16))
         cols = ("student", "status", "grade")
-        self.enroll_tree = ttk.Treeview(info_frame, columns=cols, show="headings")
-        for col, heading, w in [("student", "Student", 180), ("status", "Status", 120), ("grade", "Grade", 80)]:
+        self.enroll_tree = ttk.Treeview(tree_wrap, columns=cols, show="headings")
+        for col, heading, w in [("student","Student",200),("status","Status",130),("grade","Grade",80)]:
             self.enroll_tree.heading(col, text=heading)
             self.enroll_tree.column(col, width=w, anchor="center")
-        self.enroll_tree.pack(fill="both", expand=True, padx=10, pady=10)
+        vsb2 = ttk.Scrollbar(tree_wrap, orient="vertical", command=self.enroll_tree.yview)
+        self.enroll_tree.configure(yscrollcommand=vsb2.set)
+        self.enroll_tree.pack(side="left", fill="both", expand=True)
+        vsb2.pack(side="right", fill="y")
 
     def _on_grade_offering_change(self, event=None):
         idx = self.grade_offering.current()
@@ -652,7 +865,7 @@ class UniversityApp:
 
     def _drop_student(self):
         idx = self.drop_offering.current()
-        student = self.drop_student_combo_get()
+        student = self.drop_student.get()
         if idx < 0 or not student:
             messagebox.showwarning("Validation", "Select offering and student.")
             return
@@ -666,178 +879,238 @@ class UniversityApp:
         self._refresh_offer_tree()
         self._set_status(result)
 
-    def drop_student_combo_get(self):
-        return self.drop_student.get()
+
 
     # ═══════════════════════════════════════════════════════════
     #  STUDENT TAB
     # ═══════════════════════════════════════════════════════════
 
     def _build_student_tab(self):
-        # ── Top: Student Selector ──
-        top = ttk.Frame(self.tab_student, style="Surface.TFrame")
-        top.pack(fill="x", padx=15, pady=(15, 5))
+        parent = self.tab_student
 
-        ttk.Label(top, text="👤  Active Student:", font=FONT_SUBTITLE,
-                  style="Surface.TLabel").pack(side="left", padx=(10, 5))
+        # ── Two-pane layout: left profile sidebar + right content ──
+        # Profile sidebar
+        self.stu_sidebar = tk.Frame(parent, bg=BG_CARD, width=220)
+        self.stu_sidebar.pack(side="left", fill="y")
+        self.stu_sidebar.pack_propagate(False)
 
-        usernames = list(self.uni.students.keys())
-        self.active_student = ttk.Combobox(top, values=usernames, width=15, state="readonly")
-        self.active_student.pack(side="left", padx=5)
-        if usernames:
-            self.active_student.set(usernames[0])
-        self.active_student.bind("<<ComboboxSelected>>", lambda e: self._refresh_student_portal())
+        # Right content area with sub-navigation
+        right = ttk.Frame(parent, style="TFrame")
+        right.pack(side="left", fill="both", expand=True)
 
-        ttk.Button(top, text="🔄 Refresh", style="TButton",
-                   command=self._refresh_student_portal).pack(side="left", padx=10)
+        # Right nav bar
+        nav_bar = ttk.Frame(right, style="Surface.TFrame")
+        nav_bar.pack(fill="x")
+        ttk.Separator(right, orient="horizontal").pack(fill="x")
 
-        # ── Profile Card ──
-        self.profile_frame = ttk.Frame(self.tab_student, style="Card.TFrame")
-        self.profile_frame.pack(fill="x", padx=15, pady=10)
+        self._stu_nav_btns = {}
+        self._stu_active_section = "transcript"
+        nav_items = [
+            ("transcript", "📜  Transcript"),
+            ("register",   "📝  Register"),
+            ("schedule",   "📅  My Schedule"),
+        ]
+        for key, label in nav_items:
+            btn = tk.Label(nav_bar, text=label, bg=BG_SURFACE, fg=TEXT_SECONDARY,
+                           font=(FONT_FAMILY, 10), padx=20, pady=12, cursor="hand2")
+            btn.pack(side="left")
+            btn.bind("<Button-1>", lambda e, k=key: self._show_stu_section(k))
+            btn.bind("<Enter>", lambda e, b=btn: b.config(fg=ACCENT) if b["bg"] == BG_SURFACE else None)
+            btn.bind("<Leave>", lambda e, b=btn, k2=key:
+                     b.config(fg=TEXT_SECONDARY if self._stu_active_section != k2 else ACCENT))
+            self._stu_nav_btns[key] = btn
 
-        # ── Student Inner Tabs ──
-        stu_nb = ttk.Notebook(self.tab_student, style="Inner.TNotebook")
-        stu_nb.pack(fill="both", expand=True, padx=15, pady=(0, 10))
-
-        self.stu_transcript_tab = ttk.Frame(stu_nb, style="TFrame")
-        self.stu_register_tab = ttk.Frame(stu_nb, style="TFrame")
-        self.stu_schedule_tab = ttk.Frame(stu_nb, style="TFrame")
-
-        stu_nb.add(self.stu_transcript_tab, text=" 📜 Transcript ")
-        stu_nb.add(self.stu_register_tab, text=" 📝 Register for Courses ")
-        stu_nb.add(self.stu_schedule_tab, text=" 📅 My Schedule ")
+        # Content panels
+        self.stu_transcript_tab = ttk.Frame(right, style="TFrame")
+        self.stu_register_tab   = ttk.Frame(right, style="TFrame")
+        self.stu_schedule_tab   = ttk.Frame(right, style="TFrame")
 
         self._build_transcript_view()
         self._build_register_view()
         self._build_schedule_view()
         self._refresh_student_portal()
+        self._show_stu_section("transcript")
+
+    def _show_stu_section(self, key):
+        self._stu_active_section = key
+        section_map = {
+            "transcript": self.stu_transcript_tab,
+            "register":   self.stu_register_tab,
+            "schedule":   self.stu_schedule_tab,
+        }
+        for frame in section_map.values():
+            frame.pack_forget()
+        section_map[key].pack(fill="both", expand=True)
+
+        # Lazily refresh only the section being navigated to so we never
+        # do redundant work rebuilding hidden views.
+        refresh_map = {
+            "transcript": self._refresh_transcript,
+            "register":   self._refresh_register_view,
+            "schedule":   self._refresh_schedule_view,
+        }
+        refresh_map[key]()
+
+        for k, btn in self._stu_nav_btns.items():
+            if k == key:
+                btn.config(fg=ACCENT, font=(FONT_FAMILY, 10, "bold"),
+                           relief="flat", bd=0)
+            else:
+                btn.config(fg=TEXT_SECONDARY, font=(FONT_FAMILY, 10),
+                           relief="flat", bd=0)
 
     def _refresh_student_portal(self):
-        username = self.active_student.get()
+        username = self.current_user.username
         student = self.uni.students.get(username)
         if not student:
             return
 
-        # Update profile card
-        for w in self.profile_frame.winfo_children():
+        # Clear and rebuild sidebar
+        for w in self.stu_sidebar.winfo_children():
             w.destroy()
 
-        inner = ttk.Frame(self.profile_frame, style="Card.TFrame")
-        inner.pack(fill="x", padx=20, pady=14)
+        # Avatar
+        avatar_frame = tk.Frame(self.stu_sidebar, bg=BG_CARD)
+        avatar_frame.pack(fill="x", pady=(28, 0))
+        from utils.image_processing import process_avatar
+        self.profile_avatar_img = process_avatar(getattr(student, 'avatar_path', ''), size=(88, 88))
+        if self.profile_avatar_img:
+            av_lbl = tk.Label(avatar_frame, image=self.profile_avatar_img, bg=BG_CARD)
+        else:
+            av_lbl = tk.Label(avatar_frame, text="👤", font=(FONT_FAMILY, 42), bg=BG_CARD)
+        av_lbl.pack()
 
-        # Avatar placeholder
-        ttk.Label(inner, text="👤", font=(FONT_FAMILY, 36), style="Card.TLabel").pack(side="left", padx=(0, 16))
+        # Name & username
+        tk.Label(self.stu_sidebar, text=student.full_name, bg=BG_CARD,
+                 fg=TEXT_PRIMARY, font=(FONT_FAMILY, 12, "bold"),
+                 wraplength=190, justify="center").pack(pady=(10, 2))
+        tk.Label(self.stu_sidebar, text=f"@{student.username}", bg=BG_CARD,
+                 fg=TEXT_DIM, font=(FONT_FAMILY, 9)).pack()
 
-        info = ttk.Frame(inner, style="Card.TFrame")
-        info.pack(side="left", fill="x", expand=True)
-        ttk.Label(info, text=student.full_name, font=(FONT_FAMILY, 16, "bold"),
-                  foreground=TEXT_PRIMARY, style="Card.TLabel").pack(anchor="w")
-        ttk.Label(info, text=f"@{student.username}  ·  DOB: {student.dob}",
-                  style="Dim.TLabel").pack(anchor="w", pady=(2, 0))
+        # Age
+        try:
+            from datetime import datetime
+            dob_dt = datetime.strptime(student.dob, "%Y-%m-%d")
+            today = datetime.today()
+            age = today.year - dob_dt.year - ((today.month, today.day) < (dob_dt.month, dob_dt.day))
+            age_str = f"Age {age}"
+        except:
+            age_str = ""
+        if age_str:
+            tk.Label(self.stu_sidebar, text=age_str, bg=BG_CARD,
+                     fg=TEXT_DIM, font=(FONT_FAMILY, 9)).pack(pady=(2, 0))
 
-        # GPA badge
-        gpa_frame = ttk.Frame(inner, style="Card.TFrame")
-        gpa_frame.pack(side="right", padx=16)
-        gpa_color = SUCCESS if student.gpa >= 3.5 else (WARNING if student.gpa >= 2.5 else DANGER)
-        ttk.Label(gpa_frame, text=f"{student.gpa:.2f}", font=(FONT_FAMILY, 28, "bold"),
-                  foreground=gpa_color, background=BG_CARD).pack()
-        ttk.Label(gpa_frame, text="GPA", font=FONT_SMALL, foreground=TEXT_DIM,
-                  background=BG_CARD).pack()
+        # Divider
+        tk.Frame(self.stu_sidebar, bg=BORDER, height=1).pack(fill="x", padx=20, pady=18)
 
         # Stats
-        stats_frame = ttk.Frame(inner, style="Card.TFrame")
-        stats_frame.pack(side="right", padx=16)
-        ttk.Label(stats_frame, text=str(len(student.completed_courses)), font=(FONT_FAMILY, 18, "bold"),
-                  foreground=ACCENT, background=BG_CARD).pack()
-        ttk.Label(stats_frame, text="Completed", font=FONT_SMALL, foreground=TEXT_DIM,
-                  background=BG_CARD).pack()
+        gpa_color = SUCCESS if student.gpa >= 3.5 else (WARNING if student.gpa >= 2.5 else DANGER)
+        stats = [
+            (f"{student.gpa:.2f}", "GPA",       gpa_color),
+            (str(len(student.completed_courses)), "Completed", ACCENT),
+            (str(len(student.active_schedule)),   "Active",    WARNING),
+        ]
+        for val, label, color in stats:
+            stat_frame = tk.Frame(self.stu_sidebar, bg=BG_CARD)
+            stat_frame.pack(fill="x", padx=24, pady=6)
+            tk.Label(stat_frame, text=val, bg=BG_CARD, fg=color,
+                     font=(FONT_FAMILY, 20, "bold")).pack(anchor="w")
+            tk.Label(stat_frame, text=label, bg=BG_CARD, fg=TEXT_DIM,
+                     font=(FONT_FAMILY, 8)).pack(anchor="w")
 
-        active_frame = ttk.Frame(inner, style="Card.TFrame")
-        active_frame.pack(side="right", padx=16)
-        ttk.Label(active_frame, text=str(len(student.active_schedule)), font=(FONT_FAMILY, 18, "bold"),
-                  foreground=WARNING, background=BG_CARD).pack()
-        ttk.Label(active_frame, text="Active", font=FONT_SMALL, foreground=TEXT_DIM,
-                  background=BG_CARD).pack()
+        # Divider
+        tk.Frame(self.stu_sidebar, bg=BORDER, height=1).pack(fill="x", padx=20, pady=18)
 
-        self._refresh_transcript()
-        self._refresh_register_view()
-        self._refresh_schedule_view()
+        # Email
+        if student.email:
+            tk.Label(self.stu_sidebar, text="Email", bg=BG_CARD, fg=TEXT_DIM, font=(FONT_FAMILY, 8, "bold")).pack(anchor="w", padx=24)
+            tk.Label(self.stu_sidebar, text=student.email, bg=BG_CARD, fg=TEXT_SECONDARY, font=(FONT_FAMILY, 9), wraplength=185, justify="left").pack(anchor="w", padx=24, pady=(2, 0))
+        # Refresh only the currently visible section; the others will
+        # refresh lazily when the user navigates to them via _show_stu_section.
+        refresh_map = {
+            "transcript": self._refresh_transcript,
+            "register":   self._refresh_register_view,
+            "schedule":   self._refresh_schedule_view,
+        }
+        refresh_map[self._stu_active_section]()
 
-    # ─── Transcript ──────────────────────────────────────────
+
+    # ─── Transcript ─────────────────────────────────────────────
 
     def _build_transcript_view(self):
         parent = self.stu_transcript_tab
-
+        hdr = ttk.Frame(parent, style="Surface.TFrame")
+        hdr.pack(fill="x")
+        hdr_inner = ttk.Frame(hdr, style="Surface.TFrame")
+        hdr_inner.pack(fill="x", padx=24, pady=14)
+        ttk.Label(hdr_inner, text="Transcript", font=(FONT_FAMILY, 15, "bold"), foreground=TEXT_PRIMARY, style="Surface.TLabel").pack(side="left")
+        ttk.Separator(parent, orient="horizontal").pack(fill="x")
+        tree_wrap = ttk.Frame(parent, style="TFrame")
+        tree_wrap.pack(fill="both", expand=True, padx=20, pady=16)
         cols = ("course", "grade", "points")
-        self.transcript_tree = ttk.Treeview(parent, columns=cols, show="headings")
-        for col, heading, w in [("course", "Course Name", 280), ("grade", "Grade", 80), ("points", "Quality Points", 120)]:
+        self.transcript_tree = ttk.Treeview(tree_wrap, columns=cols, show="headings")
+        for col, heading, w, anchor in [("course","Course Name",0,"w"),("grade","Grade",80,"center"),("points","Quality Points",130,"center")]:
             self.transcript_tree.heading(col, text=heading)
-            self.transcript_tree.column(col, width=w, anchor="center")
-        self.transcript_tree.pack(fill="both", expand=True, padx=15, pady=15)
+            self.transcript_tree.column(col, width=w, anchor=anchor, stretch=(col=="course"))
+        vsb = ttk.Scrollbar(tree_wrap, orient="vertical", command=self.transcript_tree.yview)
+        self.transcript_tree.configure(yscrollcommand=vsb.set)
+        self.transcript_tree.pack(side="left", fill="both", expand=True)
+        vsb.pack(side="right", fill="y")
 
     def _refresh_transcript(self):
-        for item in self.transcript_tree.get_children():
-            self.transcript_tree.delete(item)
-        username = self.active_student.get()
+        for item in self.transcript_tree.get_children(): self.transcript_tree.delete(item)
+        username = self.current_user.username
         student = self.uni.students.get(username)
-        if not student:
-            return
-        scale = {"A+":4.0,"A":4.0,"A-":3.7,"B+":3.3,"B":3.0,"B-":2.7,
-                 "C+":2.3,"C":2.0,"C-":1.7,"D+":1.3,"D":1.0,"D-":0.7,"F":0.0}
+        if not student: return
         for i, (course, grade) in enumerate(student.completed_courses.items()):
-            pts = scale.get(grade, 0.0)
+            pts = GPA_SCALE.get(grade, 0.0)  # uses the shared constant from registrar
             tag = "even" if i % 2 == 0 else "odd"
             self.transcript_tree.insert("", "end", values=(course, grade, f"{pts:.1f}"), tags=(tag,))
         self.transcript_tree.tag_configure("even", background=TREEVIEW_BG)
         self.transcript_tree.tag_configure("odd", background=TREEVIEW_ALT)
 
-    # ─── Registration ────────────────────────────────────────
+    # ─── Registration ───────────────────────────────────────────
 
     def _build_register_view(self):
         parent = self.stu_register_tab
-
-        # Available offerings
+        hdr = ttk.Frame(parent, style="Surface.TFrame")
+        hdr.pack(fill="x")
+        hdr_inner = ttk.Frame(hdr, style="Surface.TFrame")
+        hdr_inner.pack(fill="x", padx=24, pady=14)
+        ttk.Label(hdr_inner, text="Course Registration", font=(FONT_FAMILY, 15, "bold"), foreground=TEXT_PRIMARY, style="Surface.TLabel").pack(side="left")
+        ttk.Button(hdr_inner, text="📝  Enroll in Selected", style="Accent.TButton", command=self._request_enrollment).pack(side="right")
+        ttk.Separator(parent, orient="horizontal").pack(fill="x")
+        tree_wrap = ttk.Frame(parent, style="TFrame")
+        tree_wrap.pack(fill="both", expand=True, padx=20, pady=16)
         cols = ("id", "course", "time", "seats", "waitlist", "status")
-        self.reg_tree = ttk.Treeview(parent, columns=cols, show="headings", selectmode="browse")
-        for col, heading, w in [("id", "#", 40), ("course", "Course", 200), ("time", "Time Slot", 150),
-                                 ("seats", "Seats Left", 90), ("waitlist", "Waitlist", 70), ("status", "Your Status", 120)]:
+        self.reg_tree = ttk.Treeview(tree_wrap, columns=cols, show="headings", selectmode="browse")
+        for col, heading, w, anchor in [
+            ("id","#",40,"center"),("course","Course",0,"w"),("time","Time Slot",140,"center"),
+            ("seats","Seats",70,"center"),("waitlist","Waitlist",70,"center"),("status","Status",130,"center")]:
             self.reg_tree.heading(col, text=heading)
-            self.reg_tree.column(col, width=w, anchor="center")
-        self.reg_tree.pack(fill="both", expand=True, padx=15, pady=(15, 5))
-
-        btn_frame = ttk.Frame(parent)
-        btn_frame.pack(fill="x", padx=15, pady=(5, 15))
-        ttk.Button(btn_frame, text="📝  Request Enrollment", style="Accent.TButton",
-                   command=self._request_enrollment).pack(side="left")
-        self.reg_status_label = ttk.Label(btn_frame, text="", font=FONT_BODY, foreground=TEXT_SECONDARY)
-        self.reg_status_label.pack(side="left", padx=15)
+            self.reg_tree.column(col, width=w, anchor=anchor, stretch=(col=="course"))
+        vsb = ttk.Scrollbar(tree_wrap, orient="vertical", command=self.reg_tree.yview)
+        self.reg_tree.configure(yscrollcommand=vsb.set)
+        self.reg_tree.pack(side="left", fill="both", expand=True)
+        vsb.pack(side="right", fill="y")
+        self.reg_status_label = ttk.Label(parent, text="", font=FONT_SMALL, foreground=TEXT_SECONDARY)
+        self.reg_status_label.pack(anchor="w", padx=20, pady=(0, 8))
 
     def _refresh_register_view(self):
-        for item in self.reg_tree.get_children():
-            self.reg_tree.delete(item)
-        username = self.active_student.get()
+        for item in self.reg_tree.get_children(): self.reg_tree.delete(item)
+        username = self.current_user.username
         student = self.uni.students.get(username)
-        if not student:
-            return
-
+        if not student: return
         for i, o in enumerate(self.uni.offerings):
             seats = o.seats_available
             wl = len(o.waitlist)
-            # Determine user's status
-            if username in o.enrolled_students:
-                status = "✅ Enrolled"
+            if username in o.enrolled_students: status = "✅ Enrolled"
             elif username in o.waitlist:
                 pos = o.waitlist.position_of(username)
                 status = f"⏳ Waitlist #{pos}"
-            else:
-                status = "Available" if not o.is_full else "Full"
-
+            else: status = "Available" if not o.is_full else "Full"
             tag = "enrolled" if "Enrolled" in status else ("waitlist_row" if "Waitlist" in status else ("even" if i % 2 == 0 else "odd"))
-            self.reg_tree.insert("", "end", values=(
-                i + 1, f"{o.course.dept} {o.course.number}: {o.course.name}",
-                o.time_slot, max(seats, 0), wl, status
-            ), tags=(tag,))
-
+            self.reg_tree.insert("", "end", values=(i + 1, f"{o.course.dept} {o.course.number}: {o.course.name}", o.time_slot, max(seats, 0), wl, status), tags=(tag,))
         self.reg_tree.tag_configure("even", background=TREEVIEW_BG)
         self.reg_tree.tag_configure("odd", background=TREEVIEW_ALT)
         self.reg_tree.tag_configure("enrolled", background="#dcfce7", foreground="#166534")
@@ -854,7 +1127,7 @@ class UniversityApp:
             return
 
         offering = self.uni.offerings[idx]
-        username = self.active_student.get()
+        username = self.current_user.username
 
         result = self.uni.register_student(username, offering)
 
@@ -886,19 +1159,20 @@ class UniversityApp:
     def _refresh_schedule_view(self):
         for item in self.schedule_tree.get_children():
             self.schedule_tree.delete(item)
-        username = self.active_student.get()
+        username = self.current_user.username
         student = self.uni.students.get(username)
         if not student:
             return
+        # Build a display_name → offering dict once (O(n)) so each
+        # schedule entry is resolved in O(1) instead of O(n).
+        offering_lookup = {o.display_name: o for o in self.uni.offerings}
         for i, offering_name in enumerate(student.active_schedule):
-            # Find the matching offering
-            for o in self.uni.offerings:
-                if o.display_name == offering_name:
-                    tag = "even" if i % 2 == 0 else "odd"
-                    self.schedule_tree.insert("", "end", values=(
-                        o.course.name, o.section, o.time_slot, f"{o.quarter} {o.year}"
-                    ), tags=(tag,))
-                    break
+            o = offering_lookup.get(offering_name)
+            if o:
+                tag = "even" if i % 2 == 0 else "odd"
+                self.schedule_tree.insert("", "end", values=(
+                    o.course.name, o.section, o.time_slot, f"{o.quarter} {o.year}"
+                ), tags=(tag,))
         self.schedule_tree.tag_configure("even", background=TREEVIEW_BG)
         self.schedule_tree.tag_configure("odd", background=TREEVIEW_ALT)
 

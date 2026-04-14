@@ -121,3 +121,17 @@ cython_debug/
 *.bak
 *.swp
 *~
+
+# ── University Registration System ──────────────────────────
+# Live app data (auto-generated from sample on first run; not committed)
+data/university_data.json
+
+# User-uploaded avatars (runtime only — not committed)
+data/avatars/
+# Exception: pre-supplied sample avatar images ARE committed
+!data/avatars/admin_avatar.png
+!data/avatars/jsmith_avatar.png
+!data/avatars/alovelace_avatar.png
+!data/avatars/ghopper_avatar.png
+!data/avatars/aturing_avatar.png
+!data/avatars/mfaraday_avatar.png

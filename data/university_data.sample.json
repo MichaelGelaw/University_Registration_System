@@ -1,0 +1,238 @@
+{
+    "institution_name": "University of Dubai",
+    "courses": [
+        {
+            "dept": "CS",
+            "number": 101,
+            "name": "Intro to Programming",
+            "credits": 3,
+            "prereqs": []
+        },
+        {
+            "dept": "MATH",
+            "number": 201,
+            "name": "Calculus II",
+            "credits": 3,
+            "prereqs": []
+        },
+        {
+            "dept": "PHYS",
+            "number": 101,
+            "name": "Intro to Physics",
+            "credits": 4,
+            "prereqs": []
+        },
+        {
+            "dept": "CS",
+            "number": 300,
+            "name": "Data Structures",
+            "credits": 4,
+            "prereqs": [
+                "Intro to Programming"
+            ]
+        },
+        {
+            "dept": "MATH",
+            "number": 301,
+            "name": "Linear Algebra",
+            "credits": 3,
+            "prereqs": [
+                "Calculus II"
+            ]
+        },
+        {
+            "dept": "CS",
+            "number": 400,
+            "name": "Operating Systems",
+            "credits": 3,
+            "prereqs": [
+                "Data Structures"
+            ]
+        },
+        {
+            "dept": "CS",
+            "number": 456,
+            "name": "Game Theory",
+            "credits": 4,
+            "prereqs": []
+        }
+    ],
+    "students": {
+        "jsmith": {
+            "first": "John",
+            "last": "Smith",
+            "username": "jsmith",
+            "dob": "2002-05-15",
+            "email": "jsmith@student.ud.ac.ae",
+            "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+            "avatar_path": "jsmith_avatar.png",
+            "completed_courses": {
+                "Intro to Programming": "A-",
+                "Intro to Physics": "B+",
+                "Data Structures": "A-"
+            },
+            "active_schedule": [
+                "MATH 201-1"
+            ]
+        },
+        "alovelace": {
+            "first": "Ada",
+            "last": "Lovelace",
+            "username": "alovelace",
+            "dob": "2003-12-10",
+            "email": "alovelace@student.ud.ac.ae",
+            "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+            "avatar_path": "alovelace_avatar.png",
+            "completed_courses": {
+                "Calculus II": "A+",
+                "Intro to Programming": "A"
+            },
+            "active_schedule": [
+                "CS 300-1",
+                "MATH 301-1"
+            ]
+        },
+        "ghopper": {
+            "first": "Grace",
+            "last": "Hopper",
+            "username": "ghopper",
+            "dob": "2001-12-09",
+            "email": "ghopper@student.ud.ac.ae",
+            "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+            "avatar_path": "ghopper_avatar.png",
+            "completed_courses": {
+                "Intro to Programming": "B+",
+                "Calculus II": "A"
+            },
+            "active_schedule": [
+                "CS 300-1"
+            ]
+        },
+        "aturing": {
+            "first": "Alan",
+            "last": "Turing",
+            "username": "aturing",
+            "dob": "2000-06-23",
+            "email": "aturing@student.ud.ac.ae",
+            "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+            "avatar_path": "aturing_avatar.png",
+            "completed_courses": {
+                "Intro to Programming": "A+",
+                "Calculus II": "B",
+                "Data Structures": "A"
+            },
+            "active_schedule": [
+                "CS 400-1"
+            ]
+        },
+        "mfaraday": {
+            "first": "Michael",
+            "last": "Faraday",
+            "username": "mfaraday",
+            "dob": "2002-09-22",
+            "email": "mfaraday@student.ud.ac.ae",
+            "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+            "avatar_path": "mfaraday_avatar.png",
+            "completed_courses": {
+                "Intro to Physics": "A",
+                "Calculus II": "A-"
+            },
+            "active_schedule": [
+                "MATH 201-1",
+                "PHYS 101-1"
+            ]
+        }
+    },
+    "admins": {
+        "admin": {
+            "first": "System",
+            "last": "Admin",
+            "username": "admin",
+            "email": "admin@university.edu",
+            "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+            "avatar_path": "admin_avatar.png"
+        }
+    },
+    "offerings": [
+        {
+            "course_name": "Intro to Programming",
+            "section": 1,
+            "year": 2026,
+            "quarter": "Spring",
+            "capacity": 30,
+            "time_slot": "MW 08:00-09:30",
+            "enrolled_students": [],
+            "waitlist": [],
+            "grades": {}
+        },
+        {
+            "course_name": "Calculus II",
+            "section": 1,
+            "year": 2026,
+            "quarter": "Spring",
+            "capacity": 30,
+            "time_slot": "TR 09:00-10:30",
+            "enrolled_students": [
+                "jsmith",
+                "mfaraday"
+            ],
+            "waitlist": [],
+            "grades": {}
+        },
+        {
+            "course_name": "Intro to Physics",
+            "section": 1,
+            "year": 2026,
+            "quarter": "Spring",
+            "capacity": 25,
+            "time_slot": "MW 14:00-15:30",
+            "enrolled_students": [
+                "mfaraday"
+            ],
+            "waitlist": [],
+            "grades": {}
+        },
+        {
+            "course_name": "Data Structures",
+            "section": 1,
+            "year": 2026,
+            "quarter": "Spring",
+            "capacity": 3,
+            "time_slot": "MW 10:00-11:30",
+            "enrolled_students": [
+                "alovelace",
+                "ghopper"
+            ],
+            "waitlist": [
+                "jsmith"
+            ],
+            "grades": {}
+        },
+        {
+            "course_name": "Linear Algebra",
+            "section": 1,
+            "year": 2026,
+            "quarter": "Spring",
+            "capacity": 30,
+            "time_slot": "TR 10:00-11:30",
+            "enrolled_students": [
+                "alovelace"
+            ],
+            "waitlist": [],
+            "grades": {}
+        },
+        {
+            "course_name": "Operating Systems",
+            "section": 1,
+            "year": 2026,
+            "quarter": "Spring",
+            "capacity": 20,
+            "time_slot": "TR 14:00-15:30",
+            "enrolled_students": [
+                "aturing"
+            ],
+            "waitlist": [],
+            "grades": {}
+        }
+    ]
+}
