@@ -12,7 +12,8 @@ views/ package; all data logic lives in the registrar/ package.
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from registrar import Institution, Student, Admin, hash_password
+from registrar.institution import Institution
+from registrar.models import Student, Admin, hash_password
 from utils.image_processing import process_avatar, save_avatar_file
 from views.theme import (
     configure_styles,
@@ -22,7 +23,8 @@ from views.theme import (
     TEXT_PRIMARY, TEXT_DIM,
     SUCCESS, WARNING,
 )
-from views import AdminDashboard, StudentDashboard
+from views.admin_dashboard import AdminDashboard
+from views.student_dashboard import StudentDashboard
 from auth_views import LoginFrame, RegisterFrame
 
 

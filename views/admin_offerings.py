@@ -11,7 +11,7 @@ from the BST catalog.
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from registrar import CourseOffering
+from registrar.models import CourseOffering
 from views.theme import (
     FONT_FAMILY, FONT_SMALL,
     BG_SURFACE,

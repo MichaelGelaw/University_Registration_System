@@ -10,7 +10,7 @@ constant so the grade → point mapping is never duplicated.
 
 from tkinter import ttk
 
-from registrar import GPA_SCALE
+from registrar.models import GPA_SCALE
 from views.theme import (
     FONT_FAMILY,
     TEXT_PRIMARY,

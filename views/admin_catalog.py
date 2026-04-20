@@ -11,7 +11,7 @@ delete existing ones.
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from registrar import Course
+from registrar.models import Course
 from views.theme import (
     FONT_FAMILY, FONT_SMALL, FONT_BODY, FONT_BUTTON,
     BG_DARK, BG_SURFACE, BG_CARD,

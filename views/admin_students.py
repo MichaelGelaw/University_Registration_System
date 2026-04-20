@@ -12,7 +12,7 @@ Also allows the admin to add new student accounts directly.
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from registrar import Student
+from registrar.models import Student
 from dsa_lib.merge_sort    import merge_sort_students
 from dsa_lib.linear_search import linear_search
 from views.theme import (
