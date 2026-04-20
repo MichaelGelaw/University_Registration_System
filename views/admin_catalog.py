@@ -1,5 +1,3 @@
-"""AdminCatalogView for browsing and managing catalog courses."""
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 

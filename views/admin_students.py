@@ -1,8 +1,4 @@
 """
-admin_students.py
------------------
-AdminStudentsView — the Students section of the Admin dashboard.
-
 Displays all registered students in a searchable, sortable table.
 Search uses linear_search (O(n), partial match).
 Sorting uses merge_sort_students (O(n log n), stable).
@@ -24,14 +20,7 @@ from views.theme import (
 
 
 class AdminStudentsView(ttk.Frame):
-    """
-    Ttk frame that renders the Students admin panel.
-
-    Parameters
-    ----------
-    parent : tk widget — container provided by AdminDashboard
-    app    : UniversityApp — access to app.uni and app._set_status()
-    """
+    """Ttk frame that renders the Students admin panel."""
 
     def __init__(self, parent, app):
         super().__init__(parent, style="TFrame")

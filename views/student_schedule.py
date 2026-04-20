@@ -1,5 +1,3 @@
-"""StudentScheduleView displaying the student's active schedule."""
-
 from tkinter import ttk
 
 from views.theme import (
@@ -10,14 +8,7 @@ from views.theme import (
 
 
 class StudentScheduleView(ttk.Frame):
-    """
-    Ttk frame that renders the student's active course schedule.
-
-    Parameters
-    ----------
-    parent : tk widget — container provided by StudentDashboard
-    app    : UniversityApp — access to app.uni and app.current_user
-    """
+    """Ttk frame that renders the student's active course schedule."""
 
     def __init__(self, parent, app):
         super().__init__(parent, style="TFrame")

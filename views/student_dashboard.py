@@ -1,5 +1,3 @@
-"""StudentDashboard container with sidebar and tabbed content."""
-
 import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
@@ -22,15 +20,6 @@ class StudentDashboard(ttk.Frame):
     """
     Full-height frame that holds the student profile sidebar and the
     three tabbed content views.
-
-    After construction, ``app.student_dashboard`` is set so that child
-    views (e.g. StudentRegisterView) can call
-    ``self.app.student_dashboard.refresh_portal()`` after an enrollment.
-
-    Parameters
-    ----------
-    parent : tk widget — the content_frame provided by UniversityApp
-    app    : UniversityApp
     """
 
     def __init__(self, parent, app):

@@ -1,5 +1,3 @@
-"""AdminGradesView — Grades and Drop sub-tabs."""
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -11,18 +9,12 @@ from views.theme import (
     TREEVIEW_BG, TREEVIEW_ALT,
 )
 
-GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"]
+from registrar.models import GPA_SCALE
+GRADES = list(GPA_SCALE.keys())
 
 
 class AdminGradesView(ttk.Frame):
-    """
-    Grades & Drop panel with two independent sub-tabs.
-
-    Parameters
-    ----------
-    parent : tk widget
-    app    : UniversityApp
-    """
+    """Grades & Drop panel with two independent sub-tabs."""
 
     def __init__(self, parent, app):
         super().__init__(parent, style="TFrame")

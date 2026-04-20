@@ -1,5 +1,3 @@
-"""AdminDashboard view with sidebar navigation and admin sections."""
-
 import tkinter as tk
 from tkinter import ttk
 
@@ -14,18 +12,7 @@ from views.theme import (
 
 
 class AdminDashboard(ttk.Frame):
-    """
-    Full-width frame that contains the admin sidebar + content area.
-
-    After construction, ``app.admin_dashboard`` is set so that child
-    views (e.g. AdminGradesView) can reach sibling views via
-    ``self.app.admin_dashboard.students_view.refresh()``.
-
-    Parameters
-    ----------
-    parent : tk widget — the content_frame provided by UniversityApp
-    app    : UniversityApp — gives access to app.uni, app._set_status(), etc.
-    """
+    """Full-width frame that contains the admin sidebar + content area. """
 
     def __init__(self, parent, app):
         super().__init__(parent, style="TFrame")

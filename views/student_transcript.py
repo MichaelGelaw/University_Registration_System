@@ -1,5 +1,3 @@
-"""StudentTranscriptView showing completed courses and grades."""
-
 from tkinter import ttk
 
 from registrar.models import GPA_SCALE
@@ -11,14 +9,7 @@ from views.theme import (
 
 
 class StudentTranscriptView(ttk.Frame):
-    """
-    Ttk frame that renders the student's academic transcript.
-
-    Parameters
-    ----------
-    parent : tk widget — container provided by StudentDashboard
-    app    : UniversityApp — access to app.uni and app.current_user
-    """
+    """Ttk frame that renders the student's academic transcript."""
 
     def __init__(self, parent, app):
         super().__init__(parent, style="TFrame")

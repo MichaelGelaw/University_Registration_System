@@ -5,7 +5,7 @@ from tkinter import ttk, messagebox, filedialog
 import os
 import re
 
-FONT_FAMILY = "Segoe UI"
+from views.theme import FONT_FAMILY
 
 class LoginFrame(ttk.Frame):
     def __init__(self, parent, app_controller):

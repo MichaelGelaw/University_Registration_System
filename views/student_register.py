@@ -1,5 +1,3 @@
-"""StudentRegisterView for enrolling in course offerings."""
-
 from tkinter import ttk, messagebox
 
 from views.theme import (
@@ -10,15 +8,7 @@ from views.theme import (
 
 
 class StudentRegisterView(ttk.Frame):
-    """
-    Ttk frame that renders the course registration panel.
-
-    Parameters
-    ----------
-    parent : tk widget — container provided by StudentDashboard
-    app    : UniversityApp — access to app.uni, app.current_user,
-             and app.student_dashboard for post-enrollment refresh
-    """
+    """Ttk frame that renders the course registration panel."""
 
     def __init__(self, parent, app):
         super().__init__(parent, style="TFrame")
@@ -103,6 +93,10 @@ class StudentRegisterView(ttk.Frame):
             return
 
         for i, o in enumerate(self.uni.offerings):
+            # Do not display courses the student has already completed
+            if o.course.name in student.completed_courses:
+                continue
+
             seats = o.seats_available
             wl    = len(o.waitlist)
             if username in o.enrolled_students:

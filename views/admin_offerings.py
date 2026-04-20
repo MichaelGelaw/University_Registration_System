@@ -1,5 +1,3 @@
-"""AdminOfferingsView for creating and reviewing course offerings."""
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -13,14 +11,7 @@ from views.theme import (
 
 
 class AdminOfferingsView(ttk.Frame):
-    """
-    Ttk frame that renders the Course Offerings admin panel.
-
-    Parameters
-    ----------
-    parent : tk widget — container provided by AdminDashboard
-    app    : UniversityApp — access to app.uni and app._set_status()
-    """
+    """Ttk frame that renders the Course Offerings admin panel."""
 
     def __init__(self, parent, app):
         super().__init__(parent, style="TFrame")
