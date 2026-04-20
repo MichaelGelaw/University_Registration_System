@@ -2,7 +2,7 @@
 
 from tkinter import ttk
 
-# ── Color palette ─────────────────────────────────────────────────────
+# COLOR PALETTE
 BG_DARK        = "#f0f2f5"   # main window background — soft gray
 BG_SURFACE     = "#ffffff"   # surface panels — white
 BG_CARD        = "#f8f9fc"   # card backgrounds — very light blue-gray
@@ -42,11 +42,11 @@ def configure_styles():
     style = ttk.Style()
     style.theme_use("clam")
 
-    # ── Global defaults ──────────────────────────────────────────────
+    # GLOBAL DEFAULTS
     style.configure(".", background=BG_DARK, foreground=TEXT_PRIMARY, font=FONT_BODY,
                     borderwidth=0, focuscolor=ACCENT)
 
-    # ── Notebook ─────────────────────────────────────────────────────
+    # NOTEBOOK
     style.configure("TNotebook", background=BG_DARK, borderwidth=0, padding=0)
     style.configure("TNotebook.Tab", background=BG_SURFACE, foreground=TEXT_SECONDARY,
                     padding=[24, 10], font=FONT_TAB)
@@ -63,7 +63,7 @@ def configure_styles():
               foreground=[("selected", "#ffffff"), ("active", TEXT_PRIMARY)],
               relief=[("selected", "flat")])
 
-    # ── Labels ───────────────────────────────────────────────────────
+    # LABELS
     style.configure("TLabel",        background=BG_DARK,    foreground=TEXT_PRIMARY)
     style.configure("Card.TLabel",   background=BG_CARD)
     style.configure("Surface.TLabel",background=BG_SURFACE)
@@ -73,17 +73,17 @@ def configure_styles():
     style.configure("Value.TLabel",  foreground=TEXT_PRIMARY, background=BG_CARD, font=(FONT_FAMILY, 11))
     style.configure("Dim.TLabel",    foreground=TEXT_DIM, background=BG_CARD, font=FONT_SMALL)
 
-    # ── Frames ───────────────────────────────────────────────────────
+    # FRAMES
     style.configure("TFrame",         background=BG_DARK)
     style.configure("Card.TFrame",    background=BG_CARD)
     style.configure("Surface.TFrame", background=BG_SURFACE)
 
-    # ── LabelFrames ──────────────────────────────────────────────────
+    # LABELFRAMES
     style.configure("TLabelframe",       background=BG_SURFACE, foreground=ACCENT,
                     font=(FONT_FAMILY, 11, "bold"), borderwidth=1, relief="groove")
     style.configure("TLabelframe.Label", background=BG_SURFACE, foreground=ACCENT)
 
-    # ── Buttons ──────────────────────────────────────────────────────
+    # BUTTONS
     style.configure("Accent.TButton", background=ACCENT, foreground="#ffffff",
                     font=FONT_BUTTON, padding=[16, 8], borderwidth=0)
     style.map("Accent.TButton",
@@ -111,13 +111,13 @@ def configure_styles():
               fieldbackground=[("focus", "#ffffff")],
               bordercolor=[("focus", ACCENT)])
 
-    # ── Combobox ─────────────────────────────────────────────────────
+    # COMBOBOX
     style.configure("TCombobox", fieldbackground=BG_INPUT, foreground=TEXT_PRIMARY,
                     selectbackground=ACCENT, selectforeground="#ffffff",
                     padding=[8, 6], arrowcolor=ACCENT)
     style.map("TCombobox", fieldbackground=[("focus", BG_CARD)])
 
-    # ── Treeview ─────────────────────────────────────────────────────
+    # TREEVIEW
     style.configure("Treeview", background=TREEVIEW_BG, foreground=TREEVIEW_FG,
                     fieldbackground=TREEVIEW_BG, borderwidth=0, rowheight=32,
                     font=FONT_BODY)
@@ -130,11 +130,11 @@ def configure_styles():
     style.map("Treeview.Heading",
               background=[("active", ACCENT_DIM)])
 
-    # ── Scrollbar ────────────────────────────────────────────────────
+    # SCROLLBAR
     style.configure("Vertical.TScrollbar", background=BG_SURFACE,
                     troughcolor=BG_DARK, arrowcolor=ACCENT, borderwidth=0)
 
-    # ── Separator ────────────────────────────────────────────────────
+    # SEPARATOR
     style.configure("TSeparator", background=BORDER)
 
     return style

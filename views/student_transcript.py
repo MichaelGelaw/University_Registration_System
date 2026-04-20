@@ -55,7 +55,7 @@ class StudentTranscriptView(ttk.Frame):
         self._tree.pack(side="left", fill="both", expand=True)
         vsb.pack(side="right", fill="y")
 
-    # ── Refresh ───────────────────────────────────────────────────────
+    # REFRESH
 
     def refresh(self):
         """Rebuild the transcript from the current student's completed_courses."""

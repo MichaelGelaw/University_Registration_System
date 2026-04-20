@@ -44,12 +44,12 @@ class StudentDashboard(ttk.Frame):
     # BUILD
 
     def _build(self):
-        # ── Left profile sidebar ──────────────────────────────────────
+        # LEFT PROFILE SIDEBAR
         self._sidebar = tk.Frame(self, bg=BG_CARD, width=220)
         self._sidebar.pack(side="left", fill="y")
         self._sidebar.pack_propagate(False)
 
-        # ── Right content area ────────────────────────────────────────
+        # RIGHT CONTENT AREA
         right = ttk.Frame(self, style="TFrame")
         right.pack(side="left", fill="both", expand=True)
 
@@ -84,7 +84,7 @@ class StudentDashboard(ttk.Frame):
         self._rebuild_sidebar()
         self._show_section("transcript")
 
-    # ── Navigation ────────────────────────────────────────────────────
+    # NAVIGATION
 
     def _show_section(self, key):
         """Hide all panels, show the requested one, and refresh it."""
@@ -107,7 +107,7 @@ class StudentDashboard(ttk.Frame):
             else:
                 btn.config(fg=TEXT_SECONDARY, font=(FONT_FAMILY, 10), relief="flat", bd=0)
 
-    # ── Sidebar ───────────────────────────────────────────────────────
+    # SIDEBAR
 
     def _rebuild_sidebar(self):
         """Destroy and rebuild the profile sidebar with fresh data."""
@@ -151,13 +151,19 @@ class StudentDashboard(ttk.Frame):
         # Divider
         tk.Frame(self._sidebar, bg=BORDER, height=1).pack(fill="x", padx=20, pady=18)
 
-        # GPA, completed, active stats
+        # Count waitlisted offerings
+        waitlisted = sum(
+            1 for o in self.uni.offerings
+            if student.username in o.waitlist
+        )
+
         gpa_color = (SUCCESS if student.gpa >= 3.5
                      else WARNING if student.gpa >= 2.5 else DANGER)
         for val, label, color in [
-            (f"{student.gpa:.2f}",                "GPA",       gpa_color),
-            (str(len(student.completed_courses)),  "Completed", ACCENT),
-            (str(len(student.active_schedule)),    "Active",    WARNING),
+            (f"{student.gpa:.2f}",                "GPA",        gpa_color),
+            (str(len(student.completed_courses)),  "Completed",  ACCENT),
+            (str(len(student.active_schedule)),    "Active",     WARNING),
+            (str(waitlisted),                      "Waitlisted", DANGER),
         ]:
             stat_frame = tk.Frame(self._sidebar, bg=BG_CARD)
             stat_frame.pack(fill="x", padx=24, pady=6)
@@ -177,7 +183,7 @@ class StudentDashboard(ttk.Frame):
                      fg=TEXT_SECONDARY, font=(FONT_FAMILY, 9),
                      wraplength=185, justify="left").pack(anchor="w", padx=24, pady=(2, 0))
 
-    # ── Public API ────────────────────────────────────────────────────
+    # PUBLIC API
 
     def refresh_portal(self):
         """

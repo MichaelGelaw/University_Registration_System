@@ -49,7 +49,7 @@ class StudentScheduleView(ttk.Frame):
             self._tree.column(col, width=w, anchor="center")
         self._tree.pack(fill="both", expand=True, padx=15, pady=15)
 
-    # ── Refresh ───────────────────────────────────────────────────────
+    # REFRESH
 
     def refresh(self):
         """

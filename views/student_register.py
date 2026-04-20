@@ -62,11 +62,9 @@ class StudentRegisterView(ttk.Frame):
         self._tree.pack(side="left", fill="both", expand=True)
         vsb.pack(side="right", fill="y")
 
-        self._status_label = ttk.Label(self, text="", font=FONT_SMALL,
-                                       foreground=TEXT_SECONDARY)
-        self._status_label.pack(anchor="w", padx=20, pady=(0, 8))
 
-    # ── Actions ───────────────────────────────────────────────────────
+
+    # ACTIONS
 
     def _request_enrollment(self):
         sel = self._tree.focus()
@@ -85,16 +83,15 @@ class StudentRegisterView(ttk.Frame):
         if "SUCCESS" in result:
             messagebox.showinfo("Enrollment", result)
         elif "WAITLIST" in result:
-            messagebox.showinfo("Waitlist (FCFS Queue)", result)
+            messagebox.showinfo("Waitlist", result)
         else:
             messagebox.showwarning("Registration Failed", result)
 
         # Refresh the student portal (sidebar stats + the active section)
         self.app.student_dashboard.refresh_portal()
-        self._status_label.config(text=result)
         self.app._set_status(result)
 
-    # ── Refresh ───────────────────────────────────────────────────────
+    # REFRESH
 
     def refresh(self):
         """Rebuild the offerings list with up-to-date enrollment status."""

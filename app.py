@@ -25,8 +25,9 @@ class UniversityApp:
     def __init__(self, root):
         self.root = root
         self.root.title("🎓 University Registration System")
-        self.root.geometry("1200x800")
-        self.root.minsize(1000, 700)
+        # self.root.geometry("1100x720")
+        # self.root.minsize(900, 640)
+        self.root.state("zoomed")
         self.root.configure(bg=BG_DARK)
 
         # Style combobox listbox colours globally
@@ -37,7 +38,7 @@ class UniversityApp:
 
         self.style = configure_styles()
 
-        # Load institution — rehydrates BST, Students, LinkedQueue waitlists
+        # Load institution data
         self.uni = Institution.load()
 
         self.current_user = None
@@ -52,7 +53,7 @@ class UniversityApp:
 
         self.show_login()
 
-    # ── Routing ───────────────────────────────────────────────────────
+    # ROUTING
 
     def clear_container(self):
         for widget in self.main_container.winfo_children():
@@ -87,7 +88,7 @@ class UniversityApp:
 
         self._build_status_bar()
 
-    # ── Auth actions ──────────────────────────────────────────────────
+    # AUTH ACTIONS
 
     def login_action(self, username, pwd, role):
         if not username or not pwd:
@@ -139,7 +140,7 @@ class UniversityApp:
         self.uni._save()
         return True, "Registration successful. Please log in."
 
-    # ── Shared UI chrome ──────────────────────────────────────────────
+    # SHARED UI CHROME
 
     def _build_header(self):
         header = ttk.Frame(self.main_container, style="Surface.TFrame")
@@ -221,10 +222,10 @@ class UniversityApp:
         bar.pack(fill="x", side="bottom")
         self.status_label = ttk.Label(
             bar,
-            text="  System ready  ·  All data structures loaded from JSON",
+            text="  System ready",
             font=FONT_SMALL, foreground=TEXT_DIM, style="Surface.TLabel")
         self.status_label.pack(side="left", padx=15, pady=4)
-        ttk.Label(bar, text="BST · LinkedQueue · MergeSort · LinearSearch  ",
+        ttk.Label(bar, text="University Registration System  ",
                   font=FONT_SMALL, foreground=ACCENT_DIM,
                   style="Surface.TLabel").pack(side="right", padx=15, pady=4)
 
@@ -233,7 +234,7 @@ class UniversityApp:
         self.status_label.config(text=f"  {msg}")
 
 
-# ── Entry point ───────────────────────────────────────────────────────
+# ENTRY POINT
 
 if __name__ == "__main__":
     root = tk.Tk()

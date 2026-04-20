@@ -53,7 +53,7 @@ class AdminOfferingsView(ttk.Frame):
 
         fields = ttk.Frame(card, style="Surface.TFrame")
         fields.pack(fill="x")
-        labels = ["Course (BST)", "Section", "Year", "Quarter", "Capacity", "Time Slot"]
+        labels = ["Course", "Section", "Year", "Quarter", "Capacity", "Time Slot"]
         for i, lbl in enumerate(labels):
             ttk.Label(fields, text=lbl, font=(FONT_FAMILY, 8, "bold"),
                       foreground=TEXT_SECONDARY, style="Surface.TLabel"
@@ -108,16 +108,16 @@ class AdminOfferingsView(ttk.Frame):
         vsb.pack(side="right", fill="y")
         self.refresh()
 
-    # ── Actions ───────────────────────────────────────────────────────
+    # ACTIONS
 
     def _create_offering(self):
         course_name = self._course.get()
         if not course_name:
-            messagebox.showwarning("Validation", "Select a course from the BST catalog.")
+            messagebox.showwarning("Validation", "Please select a course from the catalog.")
             return
         course = self.uni.catalog.search(course_name)
         if not course:
-            messagebox.showerror("Error", "Course not found in BST.")
+            messagebox.showerror("Error", "Course not found in catalog.")
             return
         try:
             section  = int(self._section.get())
@@ -138,7 +138,7 @@ class AdminOfferingsView(ttk.Frame):
             f"Offering created: {offering.display_name} ({self._quarter.get()} {year})"
         )
 
-    # ── Refresh ───────────────────────────────────────────────────────
+    # REFRESH
 
     def refresh(self):
         """Rebuild the offerings treeview from the current data."""

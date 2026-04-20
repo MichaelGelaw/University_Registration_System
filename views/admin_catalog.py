@@ -31,7 +31,7 @@ class AdminCatalogView(ttk.Frame):
         hdr_inner.pack(fill="x", padx=24, pady=16)
         ttk.Label(hdr_inner, text="Course Catalog", font=(FONT_FAMILY, 16, "bold"),
                   foreground=TEXT_PRIMARY, style="Surface.TLabel").pack(side="left")
-        ttk.Label(hdr_inner, text="BST — sorted in-order", font=FONT_SMALL,
+        ttk.Label(hdr_inner, text="Sorted alphabetically", font=FONT_SMALL,
                   foreground=TEXT_DIM, style="Surface.TLabel").pack(side="left", padx=12)
         ttk.Button(hdr_inner, text="🗑  Delete Selected", style="Danger.TButton",
                    command=self._delete_course).pack(side="right")
@@ -115,7 +115,7 @@ class AdminCatalogView(ttk.Frame):
         self.uni._save()
         self.refresh()
         self.app._refresh_header_stats()
-        self.app._set_status(f"Course '{name}' inserted into BST (O(log n)).")
+        self.app._set_status(f"Course '{name}' added to catalog.")
 
         for e in [self._dept, self._num, self._name, self._cred, self._prereqs]:
             e.delete(0, "end")
@@ -125,12 +125,12 @@ class AdminCatalogView(ttk.Frame):
         if not sel:
             return
         name = self._tree.item(sel)["values"][2]
-        if messagebox.askyesno("Confirm", f"Delete '{name}' from BST?"):
+        if messagebox.askyesno("Confirm", f"Delete '{name}'?"):
             self.uni.catalog.delete(name)
             self.uni._save()
             self.refresh()
             self.app._refresh_header_stats()
-            self.app._set_status(f"Course '{name}' removed from BST.")
+            self.app._set_status(f"Course '{name}' removed from catalog.")
 
     # REFRESH
 

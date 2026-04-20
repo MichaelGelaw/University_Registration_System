@@ -36,7 +36,7 @@ class AdminDashboard(ttk.Frame):
     # BUILD
 
     def _build(self):
-        # ── Left sidebar ──────────────────────────────────────────────
+        # LEFT SIDEBAR
         sidebar = tk.Frame(self, bg=ACCENT, width=180)
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
@@ -65,7 +65,7 @@ class AdminDashboard(ttk.Frame):
                 fg="#ffffff"  if self._active_key == k2 else "#c7d2fe"))
             self._nav_btns[key] = btn
 
-        # ── Right content area ────────────────────────────────────────
+        # RIGHT CONTENT AREA
         content = ttk.Frame(self, style="TFrame")
         content.pack(side="left", fill="both", expand=True)
 
@@ -78,7 +78,7 @@ class AdminDashboard(ttk.Frame):
         # Show the default section
         self._show_section("catalog")
 
-    # ── Navigation ────────────────────────────────────────────────────
+    # NAVIGATION
 
     def _show_section(self, key):
         """Hide all section frames and reveal the requested one."""

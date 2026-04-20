@@ -112,7 +112,7 @@ class AdminStudentsView(ttk.Frame):
         vsb.pack(side="right", fill="y")
         self.refresh()
 
-    # ── Actions ───────────────────────────────────────────────────────
+    # ACTIONS
 
     def _add_student(self):
         first = self._first.get().strip()
@@ -134,23 +134,21 @@ class AdminStudentsView(ttk.Frame):
             e.delete(0, "end")
 
     def _sort(self, by):
-        """Sort the student list using MergeSort and repopulate the tree."""
+        """Sort the student list and repopulate the tree."""
         students = list(self.uni.students.values())
         if by == "gpa":
             sorted_list = merge_sort_students(
                 students, key_func=lambda s: s.gpa, reverse=True)
             self.app._set_status(
-                "Students sorted by GPA (descending) using MergeSort O(n log n).")
+                "Students sorted by GPA (descending).")
         else:
             sorted_list = merge_sort_students(
                 students, key_func=lambda s: s.last.lower(), reverse=False)
             self.app._set_status(
-                "Students sorted by Last Name (ascending) using MergeSort O(n log n).")
+                "Students sorted by last name (ascending).")
         self._populate_tree(sorted_list)
-        messagebox.showinfo(
-            "DSA", f"Sorted {len(sorted_list)} students using custom MergeSort algorithm.")
 
-    # ── Refresh ───────────────────────────────────────────────────────
+    # REFRESH
 
     def refresh(self):
         """
@@ -164,7 +162,7 @@ class AdminStudentsView(ttk.Frame):
                 query,
                 key_func=lambda s: f"{s.first} {s.last} {s.username}",
             )
-            self.app._set_status(f"Linear Search: {len(results)} match(es) for '{query}'.")
+            self.app._set_status(f"{len(results)} match(es) found for '{query}'.")
         else:
             results = list(self.uni.students.values())
         self._populate_tree(results)
