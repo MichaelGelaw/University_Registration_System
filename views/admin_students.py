@@ -39,7 +39,7 @@ class AdminStudentsView(ttk.Frame):
         self.uni = app.uni
         self._build()
 
-    # ── Build ─────────────────────────────────────────────────────────
+    # BUILD
 
     def _build(self):
         # Section header

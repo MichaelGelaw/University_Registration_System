@@ -1,21 +1,9 @@
-"""MergeSort utility for sorting student lists."""
-
-
 def merge_sort_students(student_list, key_func, reverse=True):
     """
     Sort a list of Student objects using MergeSort.
 
-    Parameters
-    ----------
-    student_list : list[Student]
-    key_func     : callable — extracts the comparison value from a Student
-                   e.g. ``lambda s: s.gpa``  or  ``lambda s: s.last.lower()``
-    reverse      : bool — True for descending order (default, used for GPA),
-                   False for ascending (used for names)
-
-    Returns a new sorted list; the original is not modified.
-
-    Complexity: O(n log n) time, O(n) space
+    reverse (bool) — True for descending order (default, used for GPA),
+                     False for ascending (used for names)
     """
     if len(student_list) <= 1:
         return student_list

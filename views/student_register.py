@@ -26,7 +26,7 @@ class StudentRegisterView(ttk.Frame):
         self.uni = app.uni
         self._build()
 
-    # ── Build ─────────────────────────────────────────────────────────
+    # BUILD
 
     def _build(self):
         hdr = ttk.Frame(self, style="Surface.TFrame")

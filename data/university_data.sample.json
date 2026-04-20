@@ -135,7 +135,7 @@
             "username": "jsmith",
             "dob": "2002-05-15",
             "email": "jsmith@student.ud.ac.ae",
-            "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+            "password_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
             "avatar_path": "",
             "completed_courses": {
                 "Intro to Programming": "A-",
@@ -512,7 +512,7 @@
             "last": "Admin",
             "username": "admin",
             "email": "admin@university.edu",
-            "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+            "password_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
             "avatar_path": ""
         },
         "rsmith": {
@@ -520,7 +520,7 @@
             "last": "Smith",
             "username": "rsmith",
             "email": "rsmith@university.edu",
-            "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+            "password_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
             "avatar_path": ""
         }
     },

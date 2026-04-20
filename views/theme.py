@@ -27,7 +27,7 @@ TREEVIEW_FG    = "#1e293b"   # tree row foreground
 TREEVIEW_SEL   = "#4f46e5"   # selected row background
 TREEVIEW_ALT   = "#f1f5f9"   # alternating row background
 
-# ── Typography ────────────────────────────────────────────────────────
+# TYPOGRAPHY
 FONT_FAMILY  = "Segoe UI"
 FONT_HEADING = (FONT_FAMILY, 20, "bold")
 FONT_SUBTITLE= (FONT_FAMILY, 13)
@@ -103,7 +103,7 @@ def configure_styles():
                     font=FONT_BUTTON, padding=[14, 7])
     style.map("TButton", background=[("active", "#cbd5e1")])
 
-    # ── Entry ────────────────────────────────────────────────────────
+    # ENTRY
     style.configure("TEntry", fieldbackground=BG_INPUT, foreground=TEXT_PRIMARY,
                     insertcolor=TEXT_PRIMARY, borderwidth=1, padding=[8, 6],
                     relief="solid", bordercolor=BORDER)

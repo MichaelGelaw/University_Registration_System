@@ -15,21 +15,16 @@ SAMPLE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "da
 
 
 class Institution:
-    """
-    Top-level object managing the BST catalog, students, admins, and offerings.
-
-    All mutation methods call _save() automatically so the JSON file is
-    always in sync with in-memory state.
-    """
+    """Top-level object managing the BST catalog, students, admins, and offerings."""
 
     def __init__(self, name):
         self.name      = name
         self.catalog   = CourseBST()
-        self.students  = {}     # {username: Student}
-        self.admins    = {}     # {username: Admin}
-        self.offerings = []     # list[CourseOffering]
+        self.students  = {}     
+        self.admins    = {}     
+        self.offerings = []     
 
-    # ── Search ────────────────────────────────────────────────────────
+    # SEARCH
 
     def search_students(self, query):
         """Linear search across first name, last name, and username."""
@@ -55,8 +50,6 @@ class Institution:
     def check_time_conflict(self, student_username, new_offering):
         """
         Return True if the student already has a course at the same time slot.
-        Resolved here at the Institution level because only Institution has
-        access to all current offerings.
         """
         student = self.students.get(student_username)
         if not student:
@@ -67,11 +60,11 @@ class Institution:
                     return True
         return False
 
-    # ── Registration pipeline ─────────────────────────────────────────
+    # REGISTRATION PIPELINE
 
     def register_student(self, student_username, offering):
         """
-        Full registration pipeline:
+        step-by-step registration logic:
           1. Validate student exists
           2. Check for time conflicts (Institution level)
           3. Delegate to offering.register_request (prereqs + capacity)
@@ -123,7 +116,7 @@ class Institution:
             self._save()
         return result
 
-    # ── Persistence ───────────────────────────────────────────────────
+    # PERSISTENCE USING JSON
 
     def _save(self):
         """Auto-save current state to the default JSON file."""
@@ -149,8 +142,6 @@ class Institution:
     @classmethod
     def load(cls, filepath=None):
         """
-        Rehydrate an Institution from JSON.
-
         On first run (no university_data.json), seeds from
         university_data.sample.json so the app starts with demo data.
         Rebuilds the CourseBST, Student dict, and LinkedQueue waitlists
@@ -182,13 +173,7 @@ class Institution:
             inst.students[username] = Student.from_dict(s_data)
 
         # 3. Rebuild admins (provision a default admin if none exist)
-        admins_data = data.get("admins", {})
-        if not admins_data:
-            default = Admin("System", "Admin", "admin", "admin@university.edu",
-                            hash_password("password123"), "")
-            admins_data["admin"] = default.to_dict()
-
-        for username, a_data in admins_data.items():
+        for username, a_data in data.get("admins", {}).items():
             inst.admins[username] = Admin.from_dict(a_data)
 
         # 4. Rebuild offerings — re-link to BST courses, re-enqueue waitlists

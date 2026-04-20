@@ -5,12 +5,6 @@ AVATARS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 os.makedirs(AVATARS_DIR, exist_ok=True)
 
 def _resolve_avatar_path(avatar_path):
-    """
-    Accepts either:
-      - A filename-only string like 'jsmith24_avatar.png'  → resolved to AVATARS_DIR/filename
-      - A full absolute path (legacy / during transition)  → used as-is
-    Returns the resolved absolute path, or None if empty/missing.
-    """
     if not avatar_path:
         return None
     # If it's already absolute and exists, use it directly
@@ -59,8 +53,6 @@ def process_avatar(avatar_path, size=(100, 100)):
 def save_avatar_file(source_path, username):
     """
     Copies the source image into the internal avatars folder.
-    Returns the **filename only** (e.g. 'jsmith24_avatar.png') so paths
-    stored in JSON are portable across machines.
     """
     if not source_path or not os.path.exists(source_path):
         return ""
@@ -70,7 +62,7 @@ def save_avatar_file(source_path, username):
         dest_path = os.path.join(AVATARS_DIR, dest_filename)
 
         img = Image.open(source_path)
-        img = img.convert("RGB")  # JPEG-safe (no alpha channel issues)
+        img = img.convert("RGB")
         img.save(dest_path)
 
         return dest_filename          # ← relative filename, not full path

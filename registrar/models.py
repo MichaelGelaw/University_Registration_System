@@ -3,9 +3,6 @@
 import hashlib
 from dsa_lib.linked_queue import LinkedQueue
 
-
-# ── Grade → quality-point mapping ────────────────────────────────────
-# Import this constant wherever GPA calculation or transcript display is needed.
 GPA_SCALE = {
     "A+": 4.0, "A": 4.0, "A-": 3.7,
     "B+": 3.3, "B": 3.0, "B-": 2.7,
@@ -14,11 +11,9 @@ GPA_SCALE = {
     "F":  0.0,
 }
 
-
 def hash_password(password):
     """Return the SHA-256 hex digest of the given plaintext password."""
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
-
 
 # ─────────────────────────────────────────────────────────────────────
 #  Course
@@ -76,7 +71,7 @@ class CourseOffering:
         self.waitlist = LinkedQueue()
         self.grades   = {}
 
-    # ── Computed properties ───────────────────────────────────────────
+    # COMPUTED PROPERTIES
 
     @property
     def seats_available(self):
@@ -90,16 +85,11 @@ class CourseOffering:
     def display_name(self):
         return f"{self.course.dept} {self.course.number}-{self.section}"
 
-    # ── Enrollment logic ──────────────────────────────────────────────
+    # ENROLLMENT LOGIC
 
     def register_request(self, student):
-        """
-        Attempt to enroll a student.
-
-        Pipeline: duplicate check → prerequisite check →
-                  schedule-conflict check (Institution level) →
-                  capacity check → enroll or enqueue.
-        """
+        """Attempt to enroll a student."""
+        
         if student.username in self.enrolled_students:
             return "Already enrolled in this course."
 
@@ -112,8 +102,7 @@ class CourseOffering:
             if pre not in student.completed_courses:
                 return f"Missing prerequisite: {pre}"
 
-        # 2. Schedule conflict check — handled at Institution.check_time_conflict(),
-        #    which is called by Institution.register_student() before this method.
+        # 2. Schedule conflict check — handled by Institution.register_student
 
         # 3. Capacity check → enroll directly or add to FCFS queue
         if not self.is_full:
@@ -151,7 +140,7 @@ class CourseOffering:
         self.grades[student_username] = grade
         return f"Grade {grade} assigned to {student_username}."
 
-    # ── Serialization ─────────────────────────────────────────────────
+    # JSON SERIALIZATION
 
     def to_dict(self):
         return {
@@ -187,7 +176,7 @@ class Student:
         self.password_hash = password_hash
         self.avatar_path   = avatar_path
         self.active_schedule    = []   # list of offering display_name strings
-        self.completed_courses  = {}   # {course_name: grade}
+        self.completed_courses  = {}   
 
     @property
     def gpa(self):

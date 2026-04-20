@@ -13,14 +13,7 @@ from views.theme import (
 
 
 class AdminCatalogView(ttk.Frame):
-    """
-    Ttk frame that renders the Course Catalog admin panel.
-
-    Parameters
-    ----------
-    parent : tk widget — container provided by AdminDashboard
-    app    : UniversityApp — gives access to app.uni and app._set_status()
-    """
+    """Ttk frame that renders the Course Catalog admin panel."""
 
     def __init__(self, parent, app):
         super().__init__(parent, style="TFrame")
@@ -28,7 +21,7 @@ class AdminCatalogView(ttk.Frame):
         self.uni = app.uni
         self._build()
 
-    # ── Build ─────────────────────────────────────────────────────────
+    # BUILD
 
     def _build(self):
         # Section header
@@ -97,7 +90,7 @@ class AdminCatalogView(ttk.Frame):
         vsb.pack(side="right", fill="y")
         self.refresh()
 
-    # ── Actions ───────────────────────────────────────────────────────
+    # ACTIONS
 
     def _add_course(self):
         dept  = self._dept.get().strip().upper()
@@ -139,7 +132,7 @@ class AdminCatalogView(ttk.Frame):
             self.app._refresh_header_stats()
             self.app._set_status(f"Course '{name}' removed from BST.")
 
-    # ── Refresh ───────────────────────────────────────────────────────
+    # REFRESH
 
     def refresh(self):
         """Rebuild the treeview from the current BST in-order traversal."""

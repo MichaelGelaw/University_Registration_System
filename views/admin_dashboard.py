@@ -33,7 +33,7 @@ class AdminDashboard(ttk.Frame):
         app.admin_dashboard = self      # register so child views can reach siblings
         self._build()
 
-    # ── Build ─────────────────────────────────────────────────────────
+    # BUILD
 
     def _build(self):
         # ── Left sidebar ──────────────────────────────────────────────

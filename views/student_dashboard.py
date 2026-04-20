@@ -41,7 +41,7 @@ class StudentDashboard(ttk.Frame):
         self._active_section  = "transcript"
         self._build()
 
-    # ── Build ─────────────────────────────────────────────────────────
+    # BUILD
 
     def _build(self):
         # ── Left profile sidebar ──────────────────────────────────────

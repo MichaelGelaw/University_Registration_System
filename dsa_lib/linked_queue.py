@@ -1,6 +1,5 @@
 """LinkedQueue implementation used for course waitlists."""
 
-
 class Node:
     """A single link in the linked list — holds one piece of data."""
 
@@ -11,21 +10,21 @@ class Node:
 
 class LinkedQueue:
     """
-    FIFO Queue implemented with linked nodes (no Python collections used).
+    FIFO Queue implemented with linked nodes
 
     Complexity
     ----------
     enqueue  → O(1)
     dequeue  → O(1)
     peek     → O(1)
-    __contains__ / position_of / remove → O(n)  (linear scan)
+    __contains__ / position_of / remove → O(n)
     """
 
     def __init__(self):
         self.front = self.rear = None
         self.size = 0
 
-    # ── Core operations ───────────────────────────────────────────────
+    # CORE
 
     def enqueue(self, item):
         """Add item to the rear of the queue."""
@@ -60,8 +59,6 @@ class LinkedQueue:
     def __len__(self):
         return self.size
 
-    # ── Membership & position ─────────────────────────────────────────
-
     def __contains__(self, item):
         """Support the 'in' operator — O(n) scan."""
         curr = self.front
@@ -82,13 +79,9 @@ class LinkedQueue:
             curr = curr.next
         return -1
 
-    # ── Mutation ──────────────────────────────────────────────────────
-
     def remove(self, item):
         """
-        Remove a specific item anywhere in the queue (for cancelling a waitlist spot).
-        Returns True if the item was found and removed, False otherwise.
-        """
+        Remove a specific item anywhere in the queue (for cancelling a waitlist spot)."""
         if self.is_empty():
             return False
 
@@ -110,7 +103,7 @@ class LinkedQueue:
             curr = curr.next
         return False
 
-    # ── Serialization ─────────────────────────────────────────────────
+    # JSON Serialization
 
     def to_list(self):
         """Return a plain list of items in FIFO order (for JSON serialization / UI display)."""

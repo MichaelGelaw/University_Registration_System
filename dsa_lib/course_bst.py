@@ -12,18 +12,13 @@ class BSTNode:
 
 
 class CourseBST:
-    """
-    Binary Search Tree keyed on course name (case-insensitive).
-
-    Supports insert, search, delete, and in-order traversal.
-    Duplicate inserts (same name) update the stored course in place.
-    """
+    """Supports insert, search, delete, and in-order traversal - it is case insensitive."""
 
     def __init__(self):
         self.root = None
         self._size = 0
 
-    # ── Insertion ─────────────────────────────────────────────────────
+    # INSERTION
 
     def insert(self, course):
         if not self.root:
@@ -50,7 +45,7 @@ class CourseBST:
             # Duplicate key — update course data in place
             node.course = course
 
-    # ── Search ────────────────────────────────────────────────────────
+    # SEARCH
 
     def search(self, course_name):
         """O(log n) lookup by name. Returns the Course object or None."""
@@ -65,7 +60,7 @@ class CourseBST:
             return self._search_recursive(node.left, key)
         return self._search_recursive(node.right, key)
 
-    # ── Deletion ──────────────────────────────────────────────────────
+    # DELETION
 
     def delete(self, course_name):
         """Remove a course by name. Returns True if it was found."""
@@ -104,7 +99,7 @@ class CourseBST:
             current = current.left
         return current
 
-    # ── Traversal ─────────────────────────────────────────────────────
+    # TRAVERSAL
 
     def inorder(self):
         """Return all Course objects sorted alphabetically (in-order traversal)."""
