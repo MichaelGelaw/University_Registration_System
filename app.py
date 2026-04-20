@@ -16,7 +16,7 @@ from views.theme import (
 )
 from views.admin_dashboard import AdminDashboard
 from views.student_dashboard import StudentDashboard
-from auth_views import LoginFrame, RegisterFrame
+from views.auth_views import LoginFrame, RegisterFrame
 
 
 class UniversityApp:
