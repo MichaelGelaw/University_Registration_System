@@ -84,11 +84,13 @@ class Institution:
     def drop_student(self, student_username, offering):
         """Drop a student and auto-promote the next from the FCFS waitlist."""
         student = self.students.get(student_username)
-        if student and offering.display_name in student.active_schedule:
+        was_enrolled = student_username in offering.enrolled_students
+
+        if student and was_enrolled and offering.display_name in student.active_schedule:
             student.active_schedule.remove(offering.display_name)
 
-        # Peek at who will be promoted before the drop
-        promoted = offering.waitlist.peek() if not offering.waitlist.is_empty() else None
+        # Peek at who will be promoted before the drop (only if an enrolled seat frees up)
+        promoted = offering.waitlist.peek() if was_enrolled and not offering.waitlist.is_empty() else None
 
         result = offering.drop_student(student_username)
 

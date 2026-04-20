@@ -118,17 +118,22 @@ class CourseOffering:
         """
         Remove a student and promote the next from the FCFS queue (if any).
         """
-        if student_username not in self.enrolled_students:
+        if student_username in self.enrolled_students:
+            self.enrolled_students.remove(student_username)
+            self.grades.pop(student_username, None)
+
+            if not self.waitlist.is_empty():
+                next_student = self.waitlist.dequeue()
+                self.enrolled_students.append(next_student)
+                return f"Dropped {student_username} from enrollment. {next_student} promoted from waitlist!"
+            return f"Dropped {student_username} from enrollment. Seat is now vacant."
+            
+        elif student_username in self.waitlist:
+            self.waitlist.remove(student_username)
+            return f"Removed {student_username} from the waitlist."
+            
+        else:
             return "Student not found in this offering."
-
-        self.enrolled_students.remove(student_username)
-        self.grades.pop(student_username, None)
-
-        if not self.waitlist.is_empty():
-            next_student = self.waitlist.dequeue()
-            self.enrolled_students.append(next_student)
-            return f"Dropped {student_username}. {next_student} promoted from waitlist!"
-        return f"Dropped {student_username}. Seat is now vacant."
 
     def assign_grade(self, student_username, grade):
         """Assign a letter grade to an enrolled student."""
