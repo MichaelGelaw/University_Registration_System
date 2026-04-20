@@ -1,18 +1,4 @@
-"""
-admin_grades.py
----------------
-AdminGradesView — the Grades & Enrollment section of the Admin dashboard.
-
-Allows the admin to:
-  - Select a course offering and assign a letter grade to an enrolled student
-    (which moves the course from active → completed and recalculates GPA).
-  - Drop a student from an offering, triggering automatic promotion of the
-    next student from the FCFS LinkedQueue waitlist.
-
-Cross-view side effects after mutations:
-  - Students view is refreshed (GPA column changes).
-  - Offerings view is refreshed (enrollment/waitlist counts change).
-"""
+"""AdminGradesView for assigning grades and managing enrollment."""
 
 import tkinter as tk
 from tkinter import ttk, messagebox

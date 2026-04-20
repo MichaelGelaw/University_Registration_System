@@ -1,18 +1,4 @@
-"""
-student_register.py
--------------------
-StudentRegisterView — the course registration panel for students.
-
-Lists all available course offerings with live status indicators:
-  ✅ Enrolled    — student is already in the course
-  ⏳ Waitlist #n — student is queued (shows 1-based FCFS position)
-  Available      — seats remain
-  Full           — no seats, but student can still join the waitlist
-
-On enrollment attempt, delegates to Institution.register_student()
-which runs the full pipeline: time-conflict check → prereq check →
-capacity check → enroll or enqueue into the LinkedQueue.
-"""
+"""StudentRegisterView for enrolling in course offerings."""
 
 from tkinter import ttk, messagebox
 

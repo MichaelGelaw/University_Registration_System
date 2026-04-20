@@ -1,12 +1,4 @@
-"""
-theme.py
---------
-Visual design system for the University Registration System.
-
-Contains all color/font constants and the configure_styles() function
-that applies them to ttk widgets.  Import from here whenever a view
-needs a design token — never hard-code hex colors in view files.
-"""
+"""Shared theme constants and ttk style configuration."""
 
 from tkinter import ttk
 

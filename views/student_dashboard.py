@@ -1,18 +1,4 @@
-"""
-student_dashboard.py
---------------------
-StudentDashboard — the top-level container for the entire Student portal.
-
-Layout
-------
-Left  : Profile sidebar (avatar, name, GPA, stats, email)
-Right : Tab nav bar + content area (transcript / register / schedule)
-
-Each of the three content sections is a separate view class that is
-instantiated once and shown/hidden via pack/pack_forget. Navigating to
-a tab lazily calls that section's refresh() — so views that are not
-currently visible never do unnecessary work.
-"""
+"""StudentDashboard container with sidebar and tabbed content."""
 
 import tkinter as tk
 from tkinter import ttk

@@ -1,17 +1,4 @@
-"""
-institution.py
---------------
-The Institution class — the top-level object that owns the course catalog
-(CourseBST), student and admin registries, and all course offerings.
-
-Responsibilities
-----------------
-- Registration pipeline   (prereq + conflict checks → enroll or waitlist)
-- Drop logic              (remove student + FCFS promotion from LinkedQueue)
-- Grade finalization      (active → completed, GPA recalculation)
-- Student search          (linear_search by name / username)
-- JSON persistence        (save / load the full institutional state)
-"""
+"""Institution data model and registration logic."""
 
 import json
 import os

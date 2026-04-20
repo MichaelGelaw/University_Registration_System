@@ -1,13 +1,4 @@
-"""
-app.py
-------
-University Registration System — application entry point and controller.
-
-UniversityApp is the root controller. It owns the Tk window, loads the
-Institution from JSON, handles login / register / logout navigation, and
-builds the shared header and status bar.  All UI panels live in the
-views/ package; all data logic lives in the registrar/ package.
-"""
+"""app.py — application entry point and root controller."""
 
 import tkinter as tk
 from tkinter import ttk, messagebox

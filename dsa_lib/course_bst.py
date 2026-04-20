@@ -1,16 +1,4 @@
-"""
-course_bst.py
--------------
-Binary Search Tree (BST) that stores Course objects keyed on course name.
-
-The BST keeps the catalog sorted alphabetically at all times. An in-order
-traversal yields courses A → Z without any additional sorting step.
-
-Complexity
-----------
-insert / search / delete → O(log n) average, O(n) worst case (unbalanced)
-inorder traversal         → O(n)
-"""
+"""CourseBST implementation for alphabetically sorted course storage."""
 
 
 class BSTNode:

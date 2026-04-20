@@ -1,12 +1,4 @@
-"""
-admin_offerings.py
-------------------
-AdminOfferingsView — the Course Offerings section of the Admin dashboard.
-
-Shows all scheduled course sections with enrollment/capacity/waitlist
-counts. Allows the admin to create new offerings by selecting a course
-from the BST catalog.
-"""
+"""AdminOfferingsView for creating and reviewing course offerings."""
 
 import tkinter as tk
 from tkinter import ttk, messagebox

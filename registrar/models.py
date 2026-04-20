@@ -1,17 +1,4 @@
-"""
-models.py
----------
-Data model classes for the University Registration System.
-
-Contains
---------
-GPA_SCALE      — shared grade → quality-point mapping (single source of truth)
-hash_password  — SHA-256 password hashing utility
-Course         — a course in the university catalog
-CourseOffering — a scheduled section of a course (holds a LinkedQueue waitlist)
-Student        — a registered student
-Admin          — an administrator account
-"""
+"""Data model classes for courses, offerings, students, and admins."""
 
 import hashlib
 from dsa_lib.linked_queue import LinkedQueue

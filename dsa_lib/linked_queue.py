@@ -1,11 +1,4 @@
-"""
-linked_queue.py
----------------
-Singly-linked-list Node and the LinkedQueue built on top of it.
-
-LinkedQueue provides O(1) enqueue / dequeue and is used as the
-FCFS (First-Come-First-Served) waitlist for every CourseOffering.
-"""
+"""LinkedQueue implementation used for course waitlists."""
 
 
 class Node:

@@ -1,19 +1,4 @@
-"""
-admin_dashboard.py
-------------------
-AdminDashboard — the top-level container for the entire Admin portal.
-
-Builds a fixed sidebar navigation and instantiates the four admin
-section views as child frames. Handles the show/hide switching so
-only one section is visible at a time.
-
-Section views
--------------
-catalog_view   → AdminCatalogView
-offerings_view → AdminOfferingsView
-students_view  → AdminStudentsView
-grades_view    → AdminGradesView
-"""
+"""AdminDashboard view with sidebar navigation and admin sections."""
 
 import tkinter as tk
 from tkinter import ttk

@@ -1,12 +1,4 @@
-"""
-student_transcript.py
----------------------
-StudentTranscriptView — displays a student's completed course history.
-
-Shows course name, letter grade, and quality points (GPA contribution)
-for every course the student has finished. Uses the shared GPA_SCALE
-constant so the grade → point mapping is never duplicated.
-"""
+"""StudentTranscriptView showing completed courses and grades."""
 
 from tkinter import ttk
 

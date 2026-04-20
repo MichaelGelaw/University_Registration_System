@@ -1,9 +1,10 @@
+"""Authentication views for login and registration."""
+
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
 import re
 
-# We will rely on app's constants for some theming, but let's define the local needed ones.
 FONT_FAMILY = "Segoe UI"
 
 class LoginFrame(ttk.Frame):

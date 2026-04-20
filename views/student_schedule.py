@@ -1,13 +1,4 @@
-"""
-student_schedule.py
--------------------
-StudentScheduleView — displays a student's current active course schedule.
-
-Resolves each schedule entry from the student's active_schedule list
-(which stores offering display names as strings) to full CourseOffering
-objects using a dict lookup built once in O(n) — avoiding the O(n²)
-nested-loop pattern of a naive implementation.
-"""
+"""StudentScheduleView displaying the student's active schedule."""
 
 from tkinter import ttk
 

@@ -1,14 +1,4 @@
-"""
-linear_search.py
-----------------
-Linear (sequential) search with partial-match / substring filtering.
-
-Unlike binary search, linear search makes no assumptions about the order
-of the input — O(n) — and supports partial matches, which makes it
-suitable for real-time search-as-you-type filtering.
-
-Used for the admin student search bar.
-"""
+"""Linear search utility for admin student filtering."""
 
 
 def linear_search(items, query, key_func):

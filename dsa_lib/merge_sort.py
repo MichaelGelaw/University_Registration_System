@@ -1,14 +1,4 @@
-"""
-merge_sort.py
--------------
-MergeSort implementation for lists of Student objects.
-
-MergeSort is a stable, divide-and-conquer algorithm with guaranteed
-O(n log n) time complexity — better than quicksort's worst case O(n²).
-
-Used for sorting the student roster by GPA (descending) or by name
-(ascending) in the admin Students panel.
-"""
+"""MergeSort utility for sorting student lists."""
 
 
 def merge_sort_students(student_list, key_func, reverse=True):

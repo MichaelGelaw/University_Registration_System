@@ -1,12 +1,4 @@
-"""
-admin_catalog.py
-----------------
-AdminCatalogView — the Course Catalog section of the Admin dashboard.
-
-Displays all courses stored in the CourseBST via an in-order traversal
-(alphabetical).  Allows the admin to add new courses to the BST and
-delete existing ones.
-"""
+"""AdminCatalogView for browsing and managing catalog courses."""
 
 import tkinter as tk
 from tkinter import ttk, messagebox
