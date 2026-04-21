@@ -1,5 +1,4 @@
 """
-Displays all registered students in a searchable, sortable table.
 Search uses linear_search (O(n), partial match).
 Sorting uses merge_sort_students (O(n log n), stable).
 Also allows the admin to add new student accounts directly.

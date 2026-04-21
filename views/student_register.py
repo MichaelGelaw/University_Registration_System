@@ -100,10 +100,10 @@ class StudentRegisterView(ttk.Frame):
             seats = o.seats_available
             wl    = len(o.waitlist)
             if username in o.enrolled_students:
-                status = "✅ Enrolled"
+                status = "Enrolled"
             elif username in o.waitlist:
                 pos    = o.waitlist.position_of(username)
-                status = f"⏳ Waitlist #{pos}"
+                status = f"Waitlist #{pos}"
             else:
                 status = "Available" if not o.is_full else "Full"
 
